@@ -78,7 +78,7 @@ Escaneie o QR code com o Expo Go no celular.
 
 ## 👤 Público-Alvo
 
-Mulheres entre 16 e 50 anos, estudantes de graduação ou pós-graduação, com renda per capita de até 3 salários mínimos, usuárias frequentes de transporte público.
+Mulheres e públicos afins entre 16 e 50 anos, estudantes de graduação ou pós-graduação, com renda per capita de até 3 salários mínimos, usuárias frequentes de transporte público.
 
 ---
 
