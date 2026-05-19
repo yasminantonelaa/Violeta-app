@@ -51,7 +51,6 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
 
     const dados = await AsyncStorage.getItem('@usuarios');
     const usuarios = dados ? JSON.parse(dados) : [];
-
     const existe = usuarios.find(
       u => u.usuario.toLowerCase() === usuario.trim().toLowerCase()
     );
@@ -99,7 +98,7 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
         <TextInput
           style={styles.input}
           placeholder="Como você quer ser chamada?"
-          placeholderTextColor="#888"
+          placeholderTextColor="#C4A0BA"
           value={nome}
           onChangeText={setNome}
         />
@@ -108,7 +107,7 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
         <TextInput
           style={styles.input}
           placeholder="Escolha um usuário único"
-          placeholderTextColor="#888"
+          placeholderTextColor="#C4A0BA"
           value={usuario}
           onChangeText={setUsuario}
           autoCapitalize="none"
@@ -119,7 +118,7 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
           <TextInput
             style={styles.inputSenha}
             placeholder="Mínimo 6 caracteres"
-            placeholderTextColor="#888"
+            placeholderTextColor="#C4A0BA"
             value={senha}
             onChangeText={setSenha}
             secureTextEntry={!senhaVisivel}
@@ -133,7 +132,7 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
         <TextInput
           style={styles.input}
           placeholder="Repita sua senha"
-          placeholderTextColor="#888"
+          placeholderTextColor="#C4A0BA"
           value={confirmarSenha}
           onChangeText={setConfirmarSenha}
           secureTextEntry={!senhaVisivel}
@@ -190,66 +189,67 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#FDF0F5',
     alignItems: 'center',
     paddingVertical: 40,
     paddingHorizontal: 20,
   },
   logoContainer: { alignItems: 'center', marginBottom: 24 },
-  logo: { width: 80, height: 80, marginBottom: 10, tintColor: '#9C27B0' },
-  appNome: { fontSize: 30, fontWeight: 'bold', color: '#9C27B0', letterSpacing: 8 },
-  appSlogan: { fontSize: 12, color: '#ce93d8', fontStyle: 'italic', marginTop: 2 },
+  logo: { width: 80, height: 80, marginBottom: 10, tintColor: '#C06090' },
+  appNome: { fontSize: 30, fontWeight: 'bold', color: '#C06090', letterSpacing: 8 },
+  appSlogan: { fontSize: 12, color: '#A080B0', fontStyle: 'italic', marginTop: 2 },
   card: {
-    backgroundColor: '#2a2a4e',
+    backgroundColor: '#fff',
     borderRadius: 20,
     padding: 24,
     width: '100%',
     borderWidth: 1,
-    borderColor: '#6A0DAD',
+    borderColor: '#E8C0D8',
+    elevation: 4,
   },
-  titulo: { fontSize: 22, fontWeight: 'bold', color: '#fff', marginBottom: 16, textAlign: 'center' },
-  label: { color: '#ce93d8', fontWeight: 'bold', fontSize: 14, marginBottom: 6, marginTop: 12 },
-  sublabel: { color: '#888', fontSize: 12, marginBottom: 10, lineHeight: 18 },
+  titulo: { fontSize: 22, fontWeight: 'bold', color: '#C06090', marginBottom: 16, textAlign: 'center' },
+  label: { color: '#A080B0', fontWeight: 'bold', fontSize: 14, marginBottom: 6, marginTop: 12 },
+  sublabel: { color: '#C4A0BA', fontSize: 12, marginBottom: 10, lineHeight: 18 },
   input: {
-    backgroundColor: '#1a1a2e',
-    color: '#fff',
+    backgroundColor: '#FDF0F5',
+    color: '#6D3B5E',
     padding: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#6A0DAD',
+    borderColor: '#E8C0D8',
     fontSize: 15,
   },
   inputSenhaContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#FDF0F5',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#6A0DAD',
+    borderColor: '#E8C0D8',
     paddingRight: 12,
   },
-  inputSenha: { flex: 1, color: '#fff', padding: 14, fontSize: 15 },
+  inputSenha: { flex: 1, color: '#6D3B5E', padding: 14, fontSize: 15 },
   olho: { fontSize: 20 },
   opcaoGenero: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#FDF0F5',
     borderRadius: 10,
     padding: 12,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: '#F0D0E0',
   },
-  opcaoSelecionada: { borderColor: '#9C27B0', backgroundColor: '#2d1b4e' },
+  opcaoSelecionada: { borderColor: '#C06090', backgroundColor: '#FDE8F2' },
   radio: {
     width: 20, height: 20, borderRadius: 10,
-    borderWidth: 2, borderColor: '#666',
+    borderWidth: 2, borderColor: '#C4A0BA',
     marginRight: 12, alignItems: 'center', justifyContent: 'center',
   },
-  radioSelecionado: { borderColor: '#9C27B0' },
-  radioDentro: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#9C27B0' },
-  textoOpcao: { color: '#aaa', fontSize: 14, flex: 1 },
-  textoOpcaoSelecionado: { color: '#fff', fontWeight: 'bold' },
+  radioSelecionado: { borderColor: '#C06090' },
+  radioDentro: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#C06090' },
+  textoOpcao: { color: '#A080B0', fontSize: 14, flex: 1 },
+  textoOpcaoSelecionado: { color: '#6D3B5E', fontWeight: 'bold' },
   checkContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -258,19 +258,19 @@ const styles = StyleSheet.create({
   },
   checkbox: {
     width: 22, height: 22, borderRadius: 6,
-    borderWidth: 2, borderColor: '#6A0DAD',
+    borderWidth: 2, borderColor: '#C06090',
     marginRight: 12, alignItems: 'center',
     justifyContent: 'center', marginTop: 2, flexShrink: 0,
   },
-  checkboxMarcado: { backgroundColor: '#6A0DAD' },
+  checkboxMarcado: { backgroundColor: '#C06090' },
   checkmark: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
-  textoCheck: { color: '#aaa', fontSize: 12, flex: 1, lineHeight: 18 },
+  textoCheck: { color: '#A080B0', fontSize: 12, flex: 1, lineHeight: 18 },
   botao: {
-    backgroundColor: '#6A0DAD',
+    backgroundColor: '#C06090',
     padding: 16, borderRadius: 14, alignItems: 'center',
   },
   textoBotao: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   botaoVoltar: { alignItems: 'center', marginTop: 16, padding: 8 },
-  textoVoltar: { color: '#9C27B0', fontSize: 14 },
-  rodape: { color: '#444', fontSize: 12, marginTop: 24, textAlign: 'center' },
+  textoVoltar: { color: '#C06090', fontSize: 14 },
+  rodape: { color: '#C4A0BA', fontSize: 12, marginTop: 24, textAlign: 'center' },
 });

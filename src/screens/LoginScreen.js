@@ -15,22 +15,42 @@ export default function LoginScreen({ onLogin, onIrCadastro }) {
       Alert.alert('Campos obrigatórios', 'Preencha usuário e senha.');
       return;
     }
-
     const dados = await AsyncStorage.getItem('@usuarios');
     const usuarios = dados ? JSON.parse(dados) : [];
-
     const encontrado = usuarios.find(
       u => u.usuario.toLowerCase() === usuario.trim().toLowerCase()
         && u.senha === senha
     );
-
     if (!encontrado) {
       Alert.alert('Erro', 'Usuário ou senha incorretos.');
       return;
     }
-
     await AsyncStorage.setItem('@usuarioLogado', JSON.stringify(encontrado));
     onLogin();
+  }
+
+  async function esqueceuSenha() {
+    if (!usuario.trim()) {
+      Alert.alert(
+        'Esqueceu sua senha?',
+        'Digite seu nome de usuário no campo acima e tente novamente.'
+      );
+      return;
+    }
+    const dados = await AsyncStorage.getItem('@usuarios');
+    const usuarios = dados ? JSON.parse(dados) : [];
+    const encontrado = usuarios.find(
+      u => u.usuario.toLowerCase() === usuario.trim().toLowerCase()
+    );
+    if (!encontrado) {
+      Alert.alert('Usuário não encontrado', 'Não existe conta com esse nome de usuário.');
+      return;
+    }
+    Alert.alert(
+      'Dica de senha 💜',
+      `A senha da conta "${encontrado.usuario}" foi cadastrada por você no momento do cadastro.\n\nCaso não lembre, delete o app e recadastre-se.`,
+      [{ text: 'Entendi', style: 'default' }]
+    );
   }
 
   return (
@@ -55,7 +75,7 @@ export default function LoginScreen({ onLogin, onIrCadastro }) {
         <TextInput
           style={styles.input}
           placeholder="Seu usuário"
-          placeholderTextColor="#888"
+          placeholderTextColor="#C4A0BA"
           value={usuario}
           onChangeText={setUsuario}
           autoCapitalize="none"
@@ -66,7 +86,7 @@ export default function LoginScreen({ onLogin, onIrCadastro }) {
           <TextInput
             style={styles.inputSenha}
             placeholder="Sua senha"
-            placeholderTextColor="#888"
+            placeholderTextColor="#C4A0BA"
             value={senha}
             onChangeText={setSenha}
             secureTextEntry={!senhaVisivel}
@@ -75,6 +95,10 @@ export default function LoginScreen({ onLogin, onIrCadastro }) {
             <Text style={styles.olho}>{senhaVisivel ? '🙈' : '👁️'}</Text>
           </TouchableOpacity>
         </View>
+
+        <TouchableOpacity style={styles.botaoEsqueceu} onPress={esqueceuSenha}>
+          <Text style={styles.textoEsqueceu}>Esqueceu sua senha?</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity style={styles.botao} onPress={entrar}>
           <Text style={styles.textoBotao}>Entrar 💜</Text>
@@ -101,51 +125,58 @@ export default function LoginScreen({ onLogin, onIrCadastro }) {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#FDF0F5',
     alignItems: 'center',
     paddingVertical: 40,
     paddingHorizontal: 20,
   },
   logoContainer: { alignItems: 'center', marginBottom: 28 },
-  logo: { width: 100, height: 100, marginBottom: 10, tintColor: '#9C27B0' },
-  appNome: { fontSize: 34, fontWeight: 'bold', color: '#9C27B0', letterSpacing: 8 },
-  appSlogan: { fontSize: 13, color: '#ce93d8', fontStyle: 'italic', marginTop: 2 },
+  logo: { width: 100, height: 100, marginBottom: 10, tintColor: '#C06090' },
+  appNome: { fontSize: 34, fontWeight: 'bold', color: '#C06090', letterSpacing: 8 },
+  appSlogan: { fontSize: 13, color: '#A080B0', fontStyle: 'italic', marginTop: 2 },
   card: {
-    backgroundColor: '#2a2a4e',
+    backgroundColor: '#fff',
     borderRadius: 20,
     padding: 24,
     width: '100%',
     borderWidth: 1,
-    borderColor: '#6A0DAD',
+    borderColor: '#E8C0D8',
+    shadowColor: '#C06090',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
   },
-  titulo: { fontSize: 22, fontWeight: 'bold', color: '#fff', marginBottom: 20, textAlign: 'center' },
-  label: { color: '#ce93d8', fontWeight: 'bold', fontSize: 14, marginBottom: 6, marginTop: 10 },
+  titulo: { fontSize: 22, fontWeight: 'bold', color: '#C06090', marginBottom: 20, textAlign: 'center' },
+  label: { color: '#A080B0', fontWeight: 'bold', fontSize: 14, marginBottom: 6, marginTop: 10 },
   input: {
-    backgroundColor: '#1a1a2e',
-    color: '#fff',
+    backgroundColor: '#FDF0F5',
+    color: '#6D3B5E',
     padding: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#6A0DAD',
+    borderColor: '#E8C0D8',
     fontSize: 15,
   },
   inputSenhaContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#FDF0F5',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#6A0DAD',
+    borderColor: '#E8C0D8',
     paddingRight: 12,
   },
-  inputSenha: { flex: 1, color: '#fff', padding: 14, fontSize: 15 },
+  inputSenha: { flex: 1, color: '#6D3B5E', padding: 14, fontSize: 15 },
   olho: { fontSize: 20 },
+  botaoEsqueceu: { alignItems: 'flex-end', marginTop: 8, marginBottom: 4 },
+  textoEsqueceu: { color: '#A080B0', fontSize: 13 },
   botao: {
-    backgroundColor: '#6A0DAD',
+    backgroundColor: '#C06090',
     padding: 16,
     borderRadius: 14,
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 20,
   },
   textoBotao: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   separador: {
@@ -153,15 +184,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 20,
   },
-  linha: { flex: 1, height: 1, backgroundColor: '#444' },
-  separadorTexto: { color: '#666', marginHorizontal: 10, fontSize: 13 },
+  linha: { flex: 1, height: 1, backgroundColor: '#F0D0E0' },
+  separadorTexto: { color: '#C4A0BA', marginHorizontal: 10, fontSize: 13 },
   botaoSecundario: {
     borderWidth: 1,
-    borderColor: '#6A0DAD',
+    borderColor: '#C06090',
     padding: 14,
     borderRadius: 14,
     alignItems: 'center',
   },
-  textoBotaoSecundario: { color: '#9C27B0', fontWeight: 'bold', fontSize: 15 },
-  rodape: { color: '#444', fontSize: 12, marginTop: 24, textAlign: 'center' },
+  textoBotaoSecundario: { color: '#C06090', fontWeight: 'bold', fontSize: 15 },
+  rodape: { color: '#C4A0BA', fontSize: 12, marginTop: 24, textAlign: 'center' },
 });

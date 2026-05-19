@@ -56,10 +56,10 @@ export default function App() {
     <NavigationContainer>
       <Tab.Navigator
         screenOptions={{
-          tabBarActiveTintColor: '#9C27B0',
-          tabBarInactiveTintColor: '#888',
-          tabBarStyle: { backgroundColor: '#1a1a2e', borderTopColor: '#333' },
-          headerStyle: { backgroundColor: '#6A0DAD' },
+          tabBarActiveTintColor: '#C48BAF',
+          tabBarInactiveTintColor: '#B8A0C8',
+          tabBarStyle: { backgroundColor: '#F5E6F0', borderTopColor: '#E8C8DE' },
+          headerStyle: { backgroundColor: '#D4A0C0' },
           headerTintColor: '#fff',
           headerTitleStyle: { fontWeight: 'bold' },
           headerRight: () => (

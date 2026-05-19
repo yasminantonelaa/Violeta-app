@@ -24,8 +24,20 @@ export default function GravacaoScreen() {
   useEffect(() => {
     configurarAudio();
     carregarRegistros();
+    pedirPermissaoGaleria();
     return () => { if (reproducao) reproducao.unloadAsync(); };
   }, []);
+
+  async function pedirPermissaoGaleria() {
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'Permissão necessária',
+        'Precisamos de acesso à galeria para salvar as gravações como evidências.',
+        [{ text: 'OK' }]
+      );
+    }
+  }
 
   async function configurarAudio() {
     await Audio.requestPermissionsAsync();
@@ -47,6 +59,22 @@ export default function GravacaoScreen() {
     await AsyncStorage.setItem('@gravacoes', JSON.stringify(lista));
   }
 
+  async function salvarNaGaleria(uri) {
+    try {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Sem permissão', 'Permissão de galeria negada. O arquivo foi salvo apenas no app.');
+        return false;
+      }
+      const asset = await MediaLibrary.createAssetAsync(uri);
+      await MediaLibrary.createAlbumAsync('Violeta', asset, false);
+      return true;
+    } catch (e) {
+      console.log('Erro ao salvar na galeria:', e);
+      return false;
+    }
+  }
+
   async function iniciarAudio() {
     try {
       await Audio.setAudioModeAsync({
@@ -60,54 +88,71 @@ export default function GravacaoScreen() {
       setGravacao(recording);
       setGravandoAudio(true);
     } catch (err) {
-      Alert.alert('Erro', 'Nao foi possivel iniciar a gravacao de audio.');
+      Alert.alert('Erro', 'Não foi possível iniciar a gravação de áudio.');
     }
   }
 
   async function pararAudio() {
     if (!gravacao) return;
-    await gravacao.stopAndUnloadAsync();
-    const uri = gravacao.getURI();
-
-    // Salvar na galeria
-    if (!mediaPermission?.granted) await requestMediaPermission();
     try {
-      await MediaLibrary.saveToLibraryAsync(uri);
-    } catch (e) {}
+      await gravacao.stopAndUnloadAsync();
+      const uri = gravacao.getURI();
 
-    const novo = {
-      id: Date.now().toString(),
-      tipo: 'audio',
-      uri,
-      data: new Date().toLocaleString('pt-BR'),
-    };
-    const lista = [novo, ...registros];
-    setRegistros(lista);
-    await salvarRegistros(lista);
-    setGravacao(null);
-    setGravandoAudio(false);
-    Alert.alert('Gravacao salva!', 'O audio foi salvo no dispositivo.');
+      const salvouNaGaleria = await salvarNaGaleria(uri);
+
+      const novo = {
+        id: Date.now().toString(),
+        tipo: 'audio',
+        uri,
+        data: new Date().toLocaleString('pt-BR'),
+      };
+      const lista = [novo, ...registros];
+      setRegistros(lista);
+      await salvarRegistros(lista);
+      setGravacao(null);
+      setGravandoAudio(false);
+
+      Alert.alert(
+        'Áudio salvo! 🎙️',
+        salvouNaGaleria
+          ? 'Gravação salva no app e na galeria (álbum Violeta).'
+          : 'Gravação salva no app.'
+      );
+    } catch (err) {
+      setGravandoAudio(false);
+      Alert.alert('Erro', 'Não foi possível salvar o áudio.');
+    }
   }
 
   async function iniciarVideo() {
     if (!cameraPermission?.granted) {
-      await requestCameraPermission();
-      return;
+      const result = await requestCameraPermission();
+      if (!result.granted) {
+        Alert.alert('Permissão necessária', 'Permita o acesso à câmera para gravar vídeo.');
+        return;
+      }
     }
     if (!micPermission?.granted) {
-      await requestMicPermission();
+      const result = await requestMicPermission();
+      if (!result.granted) {
+        Alert.alert('Permissão necessária', 'Permita o acesso ao microfone para gravar vídeo.');
+        return;
+      }
+    }
+    if (!cameraRef.current) {
+      Alert.alert('Erro', 'Câmera não está pronta. Aguarde um momento.');
       return;
     }
-    if (!cameraRef.current) return;
     try {
       setGravandoVideo(true);
       const video = await cameraRef.current.recordAsync({ maxDuration: 120 });
 
-      // Salvar na galeria
-      if (!mediaPermission?.granted) await requestMediaPermission();
-      try {
-        await MediaLibrary.saveToLibraryAsync(video.uri);
-      } catch (e) {}
+      if (!video?.uri) {
+        setGravandoVideo(false);
+        return;
+      }
+
+      const salvouNaGaleria = await salvarNaGaleria(video.uri);
 
       const novo = {
         id: Date.now().toString(),
@@ -119,10 +164,17 @@ export default function GravacaoScreen() {
       setRegistros(lista);
       await salvarRegistros(lista);
       setGravandoVideo(false);
-      Alert.alert('Video salvo!', 'O video foi salvo na galeria do dispositivo.');
+
+      Alert.alert(
+        'Vídeo salvo! 📹',
+        salvouNaGaleria
+          ? 'Vídeo salvo no app e na galeria (álbum Violeta).'
+          : 'Vídeo salvo no app.'
+      );
     } catch (err) {
       setGravandoVideo(false);
-      Alert.alert('Erro', 'Nao foi possivel gravar o video.');
+      console.log('Erro ao gravar vídeo:', err);
+      Alert.alert('Erro', 'Não foi possível gravar o vídeo.');
     }
   }
 
@@ -143,7 +195,7 @@ export default function GravacaoScreen() {
       setReproducao(sound);
       await sound.playAsync();
     } catch (err) {
-      Alert.alert('Erro', 'Nao foi possivel reproduzir. O arquivo pode ter sido movido.');
+      Alert.alert('Erro', 'Não foi possível reproduzir. O arquivo pode ter sido movido.');
     }
   }
 
@@ -151,20 +203,20 @@ export default function GravacaoScreen() {
     try {
       const disponivel = await Sharing.isAvailableAsync();
       if (!disponivel) {
-        Alert.alert('Compartilhamento nao disponivel neste dispositivo.');
+        Alert.alert('Indisponível', 'Compartilhamento não disponível neste dispositivo.');
         return;
       }
       await Sharing.shareAsync(uri, {
         mimeType: tipo === 'audio' ? 'audio/m4a' : 'video/mp4',
-        dialogTitle: 'Compartilhar evidencia - Violeta',
+        dialogTitle: 'Compartilhar evidência - Violeta',
       });
     } catch (err) {
-      Alert.alert('Erro', 'Nao foi possivel compartilhar o arquivo.');
+      Alert.alert('Erro', 'Não foi possível compartilhar o arquivo.');
     }
   }
 
   async function excluir(id) {
-    Alert.alert('Excluir gravacao', 'Tem certeza? Esta acao nao pode ser desfeita.', [
+    Alert.alert('Excluir gravação', 'Tem certeza? Esta ação não pode ser desfeita.', [
       {
         text: 'Excluir',
         style: 'destructive',
@@ -180,7 +232,7 @@ export default function GravacaoScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.titulo}>Gravacao Discreta</Text>
+      <Text style={styles.titulo}>Gravação Discreta</Text>
 
       <View style={styles.seletor}>
         <TouchableOpacity
@@ -188,7 +240,7 @@ export default function GravacaoScreen() {
           onPress={() => setModo('audio')}
         >
           <Text style={[styles.textoModo, modo === 'audio' && styles.textoModoAtivo]}>
-            🎙️ Audio
+            🎙️ Áudio
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -196,7 +248,7 @@ export default function GravacaoScreen() {
           onPress={() => setModo('video')}
         >
           <Text style={[styles.textoModo, modo === 'video' && styles.textoModoAtivo]}>
-            📹 Video
+            📹 Vídeo
           </Text>
         </TouchableOpacity>
       </View>
@@ -206,21 +258,21 @@ export default function GravacaoScreen() {
           <Text style={styles.aviso}>
             {gravandoAudio
               ? '🔴 Gravando... funciona com a tela bloqueada'
-              : 'Audio gravado e salvo automaticamente no dispositivo'}
+              : 'Áudio gravado e salvo automaticamente'}
           </Text>
           <TouchableOpacity
             style={[styles.botaoGravar, gravandoAudio && styles.botaoParar]}
             onPress={gravandoAudio ? pararAudio : iniciarAudio}
           >
             <Text style={styles.textoBotaoGravar}>
-              {gravandoAudio ? '⏹  Parar Gravacao' : '⏺  Iniciar Gravacao de Audio'}
+              {gravandoAudio ? '⏹  Parar Gravação' : '⏺  Iniciar Gravação de Áudio'}
             </Text>
           </TouchableOpacity>
         </View>
       ) : (
         <View style={styles.secaoGravacao}>
           <Text style={styles.aviso}>
-            {gravandoVideo ? '🔴 Gravando video...' : 'Video salvo automaticamente na galeria'}
+            {gravandoVideo ? '🔴 Gravando vídeo...' : 'Vídeo salvo automaticamente na galeria'}
           </Text>
           {cameraPermission?.granted ? (
             <CameraView
@@ -231,7 +283,7 @@ export default function GravacaoScreen() {
             />
           ) : (
             <TouchableOpacity style={styles.botaoPermissao} onPress={requestCameraPermission}>
-              <Text style={styles.textoBotaoGravar}>Permitir acesso a camera</Text>
+              <Text style={styles.textoBotaoGravar}>Permitir acesso à câmera</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity
@@ -239,13 +291,13 @@ export default function GravacaoScreen() {
             onPress={gravandoVideo ? pararVideo : iniciarVideo}
           >
             <Text style={styles.textoBotaoGravar}>
-              {gravandoVideo ? '⏹  Parar Video' : '⏺  Iniciar Gravacao de Video'}
+              {gravandoVideo ? '⏹  Parar Vídeo' : '⏺  Iniciar Gravação de Vídeo'}
             </Text>
           </TouchableOpacity>
         </View>
       )}
 
-      <Text style={styles.secao}>{registros.length} gravacao(oes) salva(s)</Text>
+      <Text style={styles.secao}>{registros.length} gravação(ões) salva(s)</Text>
 
       <FlatList
         data={registros}
@@ -254,30 +306,21 @@ export default function GravacaoScreen() {
           <View style={styles.card}>
             <View style={styles.cardInfo}>
               <Text style={styles.cardTipo}>
-                {item.tipo === 'audio' ? '🎙️ Audio' : '📹 Video'}
+                {item.tipo === 'audio' ? '🎙️ Áudio' : '📹 Vídeo'}
               </Text>
               <Text style={styles.cardData}>{item.data}</Text>
             </View>
             <View style={styles.cardAcoes}>
               {item.tipo === 'audio' && (
-                <TouchableOpacity
-                  style={styles.botaoAcao}
-                  onPress={() => reproduzirAudio(item.uri)}
-                >
+                <TouchableOpacity style={styles.botaoAcao} onPress={() => reproduzirAudio(item.uri)}>
                   <Text style={styles.iconeAcao}>▶</Text>
                 </TouchableOpacity>
               )}
-              <TouchableOpacity
-                style={styles.botaoAcao}
-                onPress={() => compartilhar(item.uri, item.tipo)}
-              >
+              <TouchableOpacity style={styles.botaoAcao} onPress={() => compartilhar(item.uri, item.tipo)}>
                 <Text style={styles.iconeAcao}>📤</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.botaoAcao}
-                onPress={() => excluir(item.id)}
-              >
-                <Text style={styles.iconeAcaoExcluir}>🗑️</Text>
+              <TouchableOpacity style={styles.botaoAcao} onPress={() => excluir(item.id)}>
+                <Text style={styles.iconeAcao}>🗑️</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -285,8 +328,8 @@ export default function GravacaoScreen() {
         ListEmptyComponent={
           <View style={styles.vazio}>
             <Text style={styles.vazioIcone}>🎙️</Text>
-            <Text style={styles.vazioTexto}>Nenhuma gravacao ainda.</Text>
-            <Text style={styles.vazioSub}>As gravacoes ficam salvas aqui e na galeria.</Text>
+            <Text style={styles.vazioTexto}>Nenhuma gravação ainda.</Text>
+            <Text style={styles.vazioSub}>As gravações ficam salvas aqui e na galeria.</Text>
           </View>
         }
       />
@@ -295,35 +338,37 @@ export default function GravacaoScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1a1a2e', padding: 20 },
-  titulo: { color: '#9C27B0', fontSize: 22, fontWeight: 'bold', marginBottom: 16 },
-  seletor: { flexDirection: 'row', marginBottom: 16, backgroundColor: '#2a2a4e', borderRadius: 10, padding: 4 },
+  container: { flex: 1, backgroundColor: '#FDF0F5', padding: 20 },
+  titulo: { color: '#C06090', fontSize: 22, fontWeight: 'bold', marginBottom: 16 },
+  seletor: { flexDirection: 'row', marginBottom: 16, backgroundColor: '#F5D5E8', borderRadius: 10, padding: 4 },
   botaoModo: { flex: 1, padding: 10, borderRadius: 8, alignItems: 'center' },
-  modoAtivo: { backgroundColor: '#6A0DAD' },
-  textoModo: { color: '#888', fontWeight: 'bold', fontSize: 15 },
+  modoAtivo: { backgroundColor: '#C06090' },
+  textoModo: { color: '#A080B0', fontWeight: 'bold', fontSize: 15 },
   textoModoAtivo: { color: '#fff' },
   secaoGravacao: { marginBottom: 20 },
-  aviso: { color: '#ce93d8', fontSize: 13, marginBottom: 12, fontStyle: 'italic', textAlign: 'center' },
+  aviso: { color: '#A080B0', fontSize: 13, marginBottom: 12, fontStyle: 'italic', textAlign: 'center' },
   camera: { width: '100%', height: 180, borderRadius: 12, marginBottom: 12, overflow: 'hidden' },
-  botaoGravar: { backgroundColor: '#6A0DAD', padding: 16, borderRadius: 12, alignItems: 'center' },
+  botaoGravar: { backgroundColor: '#C06090', padding: 16, borderRadius: 12, alignItems: 'center' },
   botaoParar: { backgroundColor: '#c62828' },
-  botaoPermissao: { backgroundColor: '#333', padding: 14, borderRadius: 10, alignItems: 'center', marginBottom: 10 },
+  botaoPermissao: { backgroundColor: '#E8C0D8', padding: 14, borderRadius: 10, alignItems: 'center', marginBottom: 10 },
   textoBotaoGravar: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
-  secao: { color: '#9C27B0', fontSize: 14, fontWeight: 'bold', marginBottom: 10 },
+  secao: { color: '#C06090', fontSize: 14, fontWeight: 'bold', marginBottom: 10 },
   card: {
-    backgroundColor: '#2a2a4e', padding: 14, borderRadius: 10,
-    marginBottom: 10, flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', borderLeftWidth: 4, borderLeftColor: '#c62828',
+    backgroundColor: '#fff',
+    padding: 14, borderRadius: 10,
+    marginBottom: 10, flexDirection: 'row',
+    justifyContent: 'space-between', alignItems: 'center',
+    borderLeftWidth: 4, borderLeftColor: '#C06090',
+    elevation: 2,
   },
   cardInfo: { flex: 1 },
-  cardTipo: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
-  cardData: { color: '#888', fontSize: 12, marginTop: 2 },
+  cardTipo: { color: '#6D3B5E', fontWeight: 'bold', fontSize: 14 },
+  cardData: { color: '#A080B0', fontSize: 12, marginTop: 2 },
   cardAcoes: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   botaoAcao: { padding: 8 },
   iconeAcao: { fontSize: 20 },
-  iconeAcaoExcluir: { fontSize: 20 },
   vazio: { alignItems: 'center', marginTop: 30 },
   vazioIcone: { fontSize: 40, marginBottom: 8 },
-  vazioTexto: { color: '#666', fontSize: 15 },
-  vazioSub: { color: '#444', fontSize: 13, marginTop: 4, textAlign: 'center' },
+  vazioTexto: { color: '#A080B0', fontSize: 15 },
+  vazioSub: { color: '#C4A0BA', fontSize: 13, marginTop: 4, textAlign: 'center' },
 });
