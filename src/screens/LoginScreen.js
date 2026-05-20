@@ -7,13 +7,13 @@
 //    onIrCadastro - chamado quando a usuária clica em "Criar nova conta"
 //                   App.js muda o estado para 'cadastro'
             
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
-  StyleSheet, ScrollView, Alert, Image
+  StyleSheet, ScrollView, Alert, Image, Animated
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { Ionicons } from '@expo/vector-icons';
 export default function LoginScreen({ onLogin, onIrCadastro }) {
   
   //  Três estados controlam o formulario dessa tela
@@ -21,6 +21,32 @@ export default function LoginScreen({ onLogin, onIrCadastro }) {
   const [senha, setSenha] = useState('');                    //  texto digitado no campo de senha 
   const [senhaVisivel, setSenhaVisivel] = useState(false);   //  alterna esconder e mostrar a senha; começa como false para proteger a privacidade
 
+  // -- Animações --
+  // cardAnim: fade + deslize suave do card ao entrar na tela 
+  const cardAnim = useRef(new Animated.Value(0)).current;
+  // escalaEntrar: escala do botão "Entrar" ao ser pressionado 
+  const escalaEntrar = useRef(new Animated.Value(1)).current;
+  // escalaCadastro: escala do botão "Criar nova conta" ao ser pressionado
+  const escalaCadastro = useRef(new Animated.Value(1)).current;
+ 
+  // Dispara a animação de entrada do card logo que a tela monta
+  useEffect(() => {
+    Animated.timing(cardAnim, {
+      toValue: 1,
+      duration: 400,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+ 
+  // Anima a escala de um botão: comprime levemente ao pressionar e volta ao soltar
+  // Reutilizada pelos dois botões principais da tela
+  function animarBotao(escala, callback) {
+    Animated.sequence([
+      Animated.timing(escala, { toValue: 0.96, duration: 80, useNativeDriver: true }),
+      Animated.timing(escala, { toValue: 1, duration: 80, useNativeDriver: true }),
+    ]).start(callback);
+  }
+   
   //  Função principal de autenticação
   //  Segue três estapas em ordem:
   //    1. Validação local: verifica se os campos estão preenchidos antes de consultar o AsyncStorage
@@ -99,15 +125,27 @@ export default function LoginScreen({ onLogin, onIrCadastro }) {
         <Text style={styles.appSlogan}>Silêncio Nunca Mais</Text>
       </View>
 
-      {/* Card branco que agrupa todos os campos e botões do formulário */}
-      <View style={styles.card}>
+      {/* Card animado: desliza de baixo para cima e faz fade ao entrar na tela
+          cardAnim vai de 0→1 e é mapeado para opacidade e translateY simultaneamente */}
+      <Animated.View style={[
+        styles.card,
+        {
+          opacity: cardAnim,
+          transform: [{
+            translateY: cardAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [24, 0], // começa 24px abaixo e sobe até a posição final
+            })
+          }]
+        }
+      ]}>      
         <Text style={styles.titulo}>Entrar</Text>
 
         <Text style={styles.label}>Nome de usuário</Text>
         <TextInput
           style={styles.input}
           placeholder="Seu usuário"
-          placeholderTextColor="#C4A0BA"
+          placeholderTextColor="#AB92BF"
           value={usuario}
           onChangeText={setUsuario}
           autoCapitalize="none" // evita que o teclado capitalize a primeira letra
@@ -120,14 +158,18 @@ export default function LoginScreen({ onLogin, onIrCadastro }) {
           <TextInput
             style={styles.inputSenha}
             placeholder="Sua senha"
-            placeholderTextColor="#C4A0BA"
+            placeholderTextColor="#AB92BF"
             value={senha}
             onChangeText={setSenha}
             secureTextEntry={!senhaVisivel} // true = oculta, false = visível
           />
           {/* Alterna visibilidade da senha ao tocar no ícone */}
           <TouchableOpacity onPress={() => setSenhaVisivel(!senhaVisivel)}>
-            <Text style={styles.olho}>{senhaVisivel ? '🙈' : '👁️'}</Text>
+            <Ionicons
+              name={senhaVisivel ? 'eye-off' : 'eye'}
+              size={24}
+              color="#666"
+            />
           </TouchableOpacity>
         </View>
         
@@ -137,9 +179,11 @@ export default function LoginScreen({ onLogin, onIrCadastro }) {
         </TouchableOpacity>
 
         {/* Botão principal de login */}
-        <TouchableOpacity style={styles.botao} onPress={entrar}>
-          <Text style={styles.textoBotao}>Entrar 💜</Text>
-        </TouchableOpacity>
+        <Animated.View style={{ transform: [{ scale: escalaEntrar }] }}>
+          <TouchableOpacity style={styles.botao} onPress={entrar}>
+            <Text style={styles.textoBotao}>Entrar</Text>
+          </TouchableOpacity>
+        </Animated.View>
 
         {/* Separador visual "ou" entre as duas ações principais */}
         <View style={styles.separador}>
@@ -149,12 +193,17 @@ export default function LoginScreen({ onLogin, onIrCadastro }) {
         </View>
 
         {/* Botão secundário para ir à tela de cadastro */}
-        <TouchableOpacity style={styles.botaoSecundario} onPress={onIrCadastro}>
-          <Text style={styles.textoBotaoSecundario}>Criar nova conta</Text>
-        </TouchableOpacity>
-      </View>
+        <Animated.View style={{ transform: [{ scale: escalaCadastro }] }}>
+          <TouchableOpacity
+            style={styles.botaoSecundario}
+            onPress={() => animarBotao(escalaCadastro, onIrCadastro)}
+          >
+            <Text style={styles.textoBotaoSecundario}>Criar nova conta</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </Animated.View>
 
-      {/* Rodapé reforçando a privacidade: dados ficam só no dispositivo */}
+       {/* Rodapé reforçando a privacidade: dados ficam só no dispositivo */}
       <Text style={styles.rodape}>
         Seus dados ficam salvos apenas no seu dispositivo.
       </Text>
@@ -167,54 +216,54 @@ export default function LoginScreen({ onLogin, onIrCadastro }) {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,    // permite que o ScrollView ocupe toda a altura
-    backgroundColor: '#FDF0F5',
+    backgroundColor: '#1E1A2E',
     alignItems: 'center',
     paddingVertical: 40,
     paddingHorizontal: 20,
   },
   logoContainer: { alignItems: 'center', marginBottom: 28 },
-  logo: { width: 100, height: 100, marginBottom: 10, tintColor: '#C06090' },
-  appNome: { fontSize: 34, fontWeight: 'bold', color: '#C06090', letterSpacing: 8 },
-  appSlogan: { fontSize: 13, color: '#A080B0', fontStyle: 'italic', marginTop: 2 },
+  logo: { width: 100, height: 100, marginBottom: 10, tintColor: '#AB92BF' },
+  appNome: { fontSize: 34, fontWeight: 'bold', color: '#F2FDFF', letterSpacing: 8 },
+  appSlogan: { fontSize: 13, color: '#DBCBD8', fontStyle: 'italic', marginTop: 2 },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: '#2D2450',
     borderRadius: 20,
     padding: 24,
     width: '100%',
     borderWidth: 1,
-    borderColor: '#E8C0D8',
-    shadowColor: '#C06090',   // sombra no iOS
+    borderColor: '#3D3468',
+    shadowColor: '#564787',   // sombra no iOS
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 4,   // sombra no Android
   },
-  titulo: { fontSize: 22, fontWeight: 'bold', color: '#C06090', marginBottom: 20, textAlign: 'center' },
-  label: { color: '#A080B0', fontWeight: 'bold', fontSize: 14, marginBottom: 6, marginTop: 10 },
+  titulo: { fontSize: 22, fontWeight: 'bold', color: '#F2FDFF', marginBottom: 20, textAlign: 'center' },
+  label: { color: '#DBCBD8', fontWeight: 'bold', fontSize: 14, marginBottom: 6, marginTop: 10 },
   input: {
-    backgroundColor: '#FDF0F5',
-    color: '#6D3B5E',
+    backgroundColor: '#1E1A2E',
+    color: '#F2FDFF',
     padding: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E8C0D8',
+    borderColor: '#3D3468',
     fontSize: 15,
   },
   inputSenhaContainer: {
     flexDirection: 'row',       // coloca o input e o ícone lado a lado
     alignItems: 'center',
-    backgroundColor: '#FDF0F5',
+    backgroundColor: '#1E1A2E',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E8C0D8',
+    borderColor: '#3D3468',
     paddingRight: 12,
   },
-  inputSenha: { flex: 1, color: '#6D3B5E', padding: 14, fontSize: 15 },
+  inputSenha: { flex: 1, color: '#F2FDFF', padding: 14, fontSize: 15 },
   olho: { fontSize: 20 },
   botaoEsqueceu: { alignItems: 'flex-end', marginTop: 8, marginBottom: 4 },
-  textoEsqueceu: { color: '#A080B0', fontSize: 13 },
+  textoEsqueceu: { color: '#DBCBD8', fontSize: 13 },
   botao: {
-    backgroundColor: '#C06090',
+    backgroundColor: '#564787',
     padding: 16,
     borderRadius: 14,
     alignItems: 'center',
@@ -226,15 +275,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 20,
   },
-  linha: { flex: 1, height: 1, backgroundColor: '#F0D0E0' },
-  separadorTexto: { color: '#C4A0BA', marginHorizontal: 10, fontSize: 13 },
+  linha: { flex: 1, height: 1, backgroundColor: '#3D3468' },
+  separadorTexto: { color: '#AB92BF', marginHorizontal: 10, fontSize: 13 },
   botaoSecundario: {
     borderWidth: 1,
-    borderColor: '#C06090',
+    borderColor: '#564787',
     padding: 14,
     borderRadius: 14,
     alignItems: 'center',
   },
-  textoBotaoSecundario: { color: '#C06090', fontWeight: 'bold', fontSize: 15 },
-  rodape: { color: '#C4A0BA', fontSize: 12, marginTop: 24, textAlign: 'center' },
+  textoBotaoSecundario: { color: '#AB92BF', fontWeight: 'bold', fontSize: 15 },
+  rodape: { color: '#AB92BF', fontSize: 12, marginTop: 24, textAlign: 'center' },
 });
