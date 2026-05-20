@@ -60,6 +60,8 @@ O **Violeta** é um MVP desenvolvido para o Hackathon do Programa "Do Piauí par
 
 ### Instalação
 
+No prompt de comando do seu SO, faça:
+
 ```bash
 # Clonar o repositório
 git clone https://github.com/yasminantonelaa/Violeta-app.git
