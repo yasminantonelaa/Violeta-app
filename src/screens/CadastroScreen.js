@@ -1,3 +1,13 @@
+//  -- Tela de criação de conta --
+//
+//  Responsável por registrar uma nova usuária no dispositivo
+//  O processo envlove coleta de dados, validação em múltiplas etapas e autodeclação de identidade de gênero
+//  A tela recebe dois callbacks via props:
+//    onCadastro - chamado após cadastro bem-sucedido; App.js avança para 'app'
+//    onVoltar   - chamado ao clicar em "Já tenho conta"; volta para o login 
+//
+//  Todos os dados ficam salvos localmente no AsyncStorage, sem nenhum envio para servidores externos
+
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
@@ -5,6 +15,8 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+//  Lista fixa de opções de identidade de gênero apresentadas no formulário
+//  Definida fora do componente para não ser recriada a cada render
 const GENEROS = [
   'Mulher cisgênero',
   'Mulher transgênero',
@@ -15,40 +27,61 @@ const GENEROS = [
 ];
 
 export default function CadastroScreen({ onCadastro, onVoltar }) {
-  const [nome, setNome] = useState('');
-  const [usuario, setUsuario] = useState('');
-  const [senha, setSenha] = useState('');
-  const [confirmarSenha, setConfirmarSenha] = useState('');
-  const [generoSelecionado, setGeneroSelecionado] = useState(null);
-  const [aceitouTermos, setAceitouTermos] = useState(false);
-  const [senhaVisivel, setSenhaVisivel] = useState(false);
+  const [nome, setNome] = useState('');                               //  nome completo da usuária
+  const [usuario, setUsuario] = useState('');                         //  nome de usuário único
+  const [senha, setSenha] = useState('');                             //  senha escolhida
+  const [confirmarSenha, setConfirmarSenha] = useState('');           //  repetição da senha para confirmar que não houve erro
+  const [generoSelecionado, setGeneroSelecionado] = useState(null);   //  qual opção de gênero foi escolhida (null = nenhuma)
+  const [aceitouTermos, setAceitouTermos] = useState(false);          //  boolean do checkbox de autodeclaração
+  const [senhaVisivel, setSenhaVisivel] = useState(false);            //  alterna entre mostrar e ocultar a senha
 
+  //  Função principal de cadastro
+  //  
+  //  A validação é feita em cascata: cada verificação usa 'return' para interroper a execução
+  //  imediatamente se algo estiver errado, sem precisar de if/else aninhados
+  //  
+  //  A ordem das validações é intencional - das mais básicas para as mais especificas, da mesma
+  //  forma que a usuária preenche o formulario de cima para baixo 
   async function cadastrar() {
+    //  Verifica se todos os campos de texto foram preenchidos
     if (!nome.trim() || !usuario.trim() || !senha || !confirmarSenha) {
       Alert.alert('Campos obrigatórios', 'Preencha todos os campos.');
       return;
     }
+
+    // Usuário precisa ter pelo menos 3 caracteres para ser identificável
     if (usuario.trim().length < 3) {
       Alert.alert('Usuário inválido', 'O nome de usuário deve ter pelo menos 3 caracteres.');
       return;
     }
+
+    // Senha muito curta é uma vulnerabilidade; mínimo de 6 caracteres
     if (senha.length < 6) {
       Alert.alert('Senha fraca', 'A senha deve ter pelo menos 6 caracteres.');
       return;
     }
+
+    // Confirmação garante que a usuária não digitou a senha com erro de digitação
     if (senha !== confirmarSenha) {
       Alert.alert('Senhas diferentes', 'As senhas não coincidem.');
       return;
     }
+
+    // A seleção de gênero é obrigatória, pois define o público-alvo do app
     if (!generoSelecionado) {
       Alert.alert('Autodeclaração necessária', 'Por favor, selecione como você se identifica.');
       return;
     }
+
+    // O checkbox confirma que a usuária leu e concorda com a declaração
     if (!aceitouTermos) {
       Alert.alert('Confirmação necessária', 'Por favor, confirme sua autodeclaração.');
       return;
     }
 
+    //  Verifica unicidade do nome de usuário
+    //  Carrega a lista existente e procura se já existe alguém com o mesmo username
+    //  A comparação ignora maiúsculas/minúsculas para evitar que "Maria" e "maria" sejam contas diferentes
     const dados = await AsyncStorage.getItem('@usuarios');
     const usuarios = dados ? JSON.parse(dados) : [];
     const existe = usuarios.find(
@@ -59,6 +92,8 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
       return;
     }
 
+    //  Monta o objeto da nova usuária
+    //  O id usa Date.now() que retorna o timestamp atual em milissegundos
     const novoUsuario = {
       id: Date.now().toString(),
       nome: nome.trim(),
@@ -67,10 +102,12 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
       genero: generoSelecionado,
     };
 
+    // Adiciona a nova usuária à lista e salva a sessão imediatamente    
     const lista = [...usuarios, novoUsuario];
     await AsyncStorage.setItem('@usuarios', JSON.stringify(lista));
     await AsyncStorage.setItem('@usuarioLogado', JSON.stringify(novoUsuario));
 
+    // Exibe mensagem de boas-vindas e, ao confirmar, avança para o app
     Alert.alert('Bem-vinda! 💜', `Conta criada com sucesso, ${nome.trim()}!`, [
       { text: 'Entrar', onPress: onCadastro }
     ]);
@@ -79,8 +116,9 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
   return (
     <ScrollView
       contentContainerStyle={styles.container}
-      keyboardShouldPersistTaps="handled"
+      keyboardShouldPersistTaps="handled" // garante que botões funcionem com teclado aberto
     >
+      {/* Cabeçalho com logo, nome e slogan — mesmo visual da LoginScreen */}
       <View style={styles.logoContainer}>
         <Image
           source={require('../../assets/borboleta.jpg')}
@@ -91,9 +129,11 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
         <Text style={styles.appSlogan}>Silêncio Nunca Mais</Text>
       </View>
 
+      {/* Card branco que agrupa o formulário completo */}    
       <View style={styles.card}>
         <Text style={styles.titulo}>Criar conta</Text>
 
+        {/* Campo de nome completo — sem restrição de capitalização */}
         <Text style={styles.label}>Nome completo</Text>
         <TextInput
           style={styles.input}
@@ -103,6 +143,7 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
           onChangeText={setNome}
         />
 
+        {/* Nome de usuário — autoCapitalize off para não forçar maiúscula */}
         <Text style={styles.label}>Nome de usuário</Text>
         <TextInput
           style={styles.input}
@@ -113,6 +154,7 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
           autoCapitalize="none"
         />
 
+        {/* Campo de senha com botão de visibilidade */}
         <Text style={styles.label}>Senha</Text>
         <View style={styles.inputSenhaContainer}>
           <TextInput
@@ -121,13 +163,16 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
             placeholderTextColor="#C4A0BA"
             value={senha}
             onChangeText={setSenha}
-            secureTextEntry={!senhaVisivel}
+            secureTextEntry={!senhaVisivel} // true = oculta com "******"
           />
           <TouchableOpacity onPress={() => setSenhaVisivel(!senhaVisivel)}>
             <Text style={styles.olho}>{senhaVisivel ? '🙈' : '👁️'}</Text>
           </TouchableOpacity>
         </View>
 
+          {/* Campo de confirmação de senha: usa a mesma visibilidade da 
+              senha principal (senhaVisivel) para que ambos mostrem/escondam
+              juntos, facilitando a comparação visual */}
         <Text style={styles.label}>Confirmar senha</Text>
         <TextInput
           style={styles.input}
@@ -138,17 +183,22 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
           secureTextEntry={!senhaVisivel}
         />
 
+        {/* Seção de autodeclaração de gênero */}
         <Text style={styles.label}>Como você se identifica?</Text>
         <Text style={styles.sublabel}>
           O Violeta é um espaço seguro para mulheres e pessoas de gêneros correlatos ao feminino.
         </Text>
 
+        {/* .map() percorre o array GENEROS e renderiza um botão para cada opção
+            O estilo condicional [ styles.opcaoGenero, generoSelecionado === genero && styles.opcaoSelecionada ]
+            aplica o estilo de seleção apenas na opção que foi tocada */}
         {GENEROS.map(genero => (
           <TouchableOpacity
             key={genero}
             style={[styles.opcaoGenero, generoSelecionado === genero && styles.opcaoSelecionada]}
             onPress={() => setGeneroSelecionado(genero)}
           >
+            {/* Botão de rádio customizado: círculo externo + ponto interno quando selecionado */}
             <View style={[styles.radio, generoSelecionado === genero && styles.radioSelecionado]}>
               {generoSelecionado === genero && <View style={styles.radioDentro} />}
             </View>
@@ -158,6 +208,8 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
           </TouchableOpacity>
         ))}
 
+          {/* Checkbox de autodeclaração: ao tocar, inverte o estado booleano de aceitouTermos com !aceitouTermos
+              O estilo do checkbox muda visualmente conforme o estado (desmarcado --> marcado) */}
         <TouchableOpacity
           style={styles.checkContainer}
           onPress={() => setAceitouTermos(!aceitouTermos)}
@@ -170,15 +222,18 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
           </Text>
         </TouchableOpacity>
 
+        {/* Botão principal: só avança após todas as validações passarem */}
         <TouchableOpacity style={styles.botao} onPress={cadastrar}>
           <Text style={styles.textoBotao}>Criar conta 💜</Text>
         </TouchableOpacity>
 
+        {/* Link para voltar ao login caso a usuária já tenha uma conta */}
         <TouchableOpacity style={styles.botaoVoltar} onPress={onVoltar}>
           <Text style={styles.textoVoltar}>← Já tenho conta</Text>
         </TouchableOpacity>
       </View>
 
+      {/* Rodapé reforçando que os dados são armazenados apenas localmente */}
       <Text style={styles.rodape}>
         Seus dados ficam salvos apenas no seu dispositivo.
       </Text>
@@ -186,6 +241,7 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
   );
 }
 
+// -- Estilos --
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
@@ -205,7 +261,7 @@ const styles = StyleSheet.create({
     width: '100%',
     borderWidth: 1,
     borderColor: '#E8C0D8',
-    elevation: 4,
+    elevation: 4,   // sombra no Android
   },
   titulo: { fontSize: 22, fontWeight: 'bold', color: '#C06090', marginBottom: 16, textAlign: 'center' },
   label: { color: '#A080B0', fontWeight: 'bold', fontSize: 14, marginBottom: 6, marginTop: 12 },
@@ -242,7 +298,7 @@ const styles = StyleSheet.create({
   },
   opcaoSelecionada: { borderColor: '#C06090', backgroundColor: '#FDE8F2' },
   radio: {
-    width: 20, height: 20, borderRadius: 10,
+    width: 20, height: 20, borderRadius: 10,    // borderRadius igual a metade = círculo perfeito
     borderWidth: 2, borderColor: '#C4A0BA',
     marginRight: 12, alignItems: 'center', justifyContent: 'center',
   },
@@ -252,7 +308,7 @@ const styles = StyleSheet.create({
   textoOpcaoSelecionado: { color: '#6D3B5E', fontWeight: 'bold' },
   checkContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'flex-start',   // alinha pelo topo para o checkbox não centralizar com um texto longo
     marginTop: 20,
     marginBottom: 24,
   },
