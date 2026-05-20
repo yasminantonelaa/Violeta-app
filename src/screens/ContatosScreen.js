@@ -136,7 +136,7 @@ export default function ContatosScreen() {
 
       {/* FlatList é a forma correta de redenrizar listas longas no React Native
           Ao contrário de um .map() dentro de um ScrollView, a FlatList só redenriza
-          os itens visíveis na tela*/}
+          os itens visíveis na tela */}
       <FlatList
         data={contatos}                   //  o array de contatos a exibir
         keyExtractor={item => item.id}    //  função que retorna a chave única de cada item
@@ -155,7 +155,6 @@ export default function ContatosScreen() {
             </TouchableOpacity>
           </View>
         )}
-        {/* Componente exibido automaticamente quando data é um array vazio */}
         ListEmptyComponent={
           <View style={styles.vazio}>
             <Text style={styles.vazioIcone}>👥</Text>

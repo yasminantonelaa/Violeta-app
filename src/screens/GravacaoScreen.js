@@ -413,8 +413,7 @@ export default function GravacaoScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        )}
-        {/* Exibido automaticamente quando não há nenhuma gravação salva */}    
+        )}  
         ListEmptyComponent={
           <View style={styles.vazio}>
             <Text style={styles.vazioIcone}>🎙️</Text>
