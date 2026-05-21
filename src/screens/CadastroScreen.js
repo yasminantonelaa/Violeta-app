@@ -261,7 +261,7 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
         {/* Botão principal animado: só avança após todas as validações passarem */}
         <Animated.View style={{ transform: [{ scale: escalaCriar }] }}>
           <TouchableOpacity style={styles.botao} onPress={cadastrar}>
-            <Text style={styles.textoBotao}>Criar conta 💜</Text>
+            <Text style={styles.textoBotao}>Criar conta</Text>
           </TouchableOpacity>
         </Animated.View>
 
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#564787',
     padding: 16, borderRadius: 14, alignItems: 'center',
   },
-  textoBotao: { color: '#564787', fontWeight: 'bold', fontSize: 16 },
+  textoBotao: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   botaoVoltar: { alignItems: 'center', marginTop: 16, padding: 8 },
   textoVoltar: { color: '#AB92BF', fontSize: 14 },
   rodape: { color: '#AB92BF', fontSize: 12, marginTop: 24, textAlign: 'center' },
