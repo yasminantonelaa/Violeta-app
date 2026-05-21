@@ -168,7 +168,7 @@ export default function LoginScreen({ onLogin, onIrCadastro }) {
             <Ionicons
               name={senhaVisivel ? 'eye-off' : 'eye'}
               size={24}
-              color="#666"
+              color="#AB92BF"
             />
           </TouchableOpacity>
         </View>

@@ -386,7 +386,7 @@ export default function GravacaoScreen() {
         <View style={styles.secaoGravacao}>
           <Animated.Text style={styles.aviso}>
             {gravandoVideo ? '🔴 Gravando vídeo...' : 'Vídeo salvo automaticamente na galeria'}
-          </Animated.TextText>
+          </Animated.Text>
 
           {/* O preview da câmera só é exibido se a permissão foi concedida.
               Caso contrário, um botão de solicitação de permissão aparece no lugar.

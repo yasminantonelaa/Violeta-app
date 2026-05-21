@@ -14,6 +14,7 @@ import {
   StyleSheet, ScrollView, Alert, Image, Animated
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 
 //  Lista fixa de opções de identidade de gênero apresentadas no formulário
 //  Definida fora do componente para não ser recriada a cada render
@@ -201,7 +202,7 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
             secureTextEntry={!senhaVisivel} // true = oculta com "******"
           />
           <TouchableOpacity onPress={() => setSenhaVisivel(!senhaVisivel)}>
-            <Text style={styles.olho}>{senhaVisivel ? '🙈' : '👁️'}</Text>
+            <Ionicons name={senhaVisivel ? 'eye-off' : 'eye'} size={24} color="#AB92BF" />
           </TouchableOpacity>
         </View>
 
@@ -328,7 +329,6 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   inputSenha: { flex: 1, color: '#F2FDFF', padding: 14, fontSize: 15 },
-  olho: { fontSize: 20 },
   opcaoGenero: {
     flexDirection: 'row',
     alignItems: 'center',
