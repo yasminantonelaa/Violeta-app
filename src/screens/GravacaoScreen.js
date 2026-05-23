@@ -22,6 +22,7 @@ import {
   View, Text, TouchableOpacity, StyleSheet,
   FlatList, Alert, Animated
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import * as Sharing from 'expo-sharing';
@@ -47,12 +48,10 @@ export default function GravacaoScreen() {
   //  Ele é necessário para chamar métodos diretamente na câmera, como .recordAsync() e stopRecording()
   const cameraRef = useRef(null);
 
-    // -- Animação de piscar do indicador de gravação ativa --
   // piscar: valor animado que vai de 1 → 0 → 1 em loop enquanto está gravando
   // Cria o efeito visual de "REC" piscando, comum em gravadores
   const piscar = useRef(new Animated.Value(1)).current;
  
-  // -- Animação de escala dos botões de gravar/parar --
   const escalaBotao = useRef(new Animated.Value(1)).current;
  
   useEffect(() => {
@@ -342,17 +341,25 @@ export default function GravacaoScreen() {
           style={[styles.botaoModo, modo === 'audio' && styles.modoAtivo]}
           onPress={() => setModo('audio')}
         >
-          <Text style={[styles.textoModo, modo === 'audio' && styles.textoModoAtivo]}>
-            🎙️ Áudio
-          </Text>
+          <Ionicons
+            name={modo === 'audio' ? 'mic' : 'mic-outline'}
+            size={18}
+            color={modo === 'audio' ? '#fff' : '#AB92BF'}
+            style={{ marginRight: 6 }}
+          />
+          <Text style={[styles.textoModo, modo === 'audio' && styles.textoModoAtivo]}>Áudio</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.botaoModo, modo === 'video' && styles.modoAtivo]}
           onPress={() => setModo('video')}
         >
-          <Text style={[styles.textoModo, modo === 'video' && styles.textoModoAtivo]}>
-            📹 Vídeo
-          </Text>
+          <Ionicons
+            name={modo === 'video' ? 'videocam' : 'videocam-outline'}
+            size={18}
+            color={modo === 'video' ? '#fff' : '#AB92BF'}
+            style={{ marginRight: 6 }}
+          />
+          <Text style={[styles.textoModo, modo === 'video' && styles.textoModoAtivo]}>Vídeo</Text>
         </TouchableOpacity>
       </View>
 
@@ -364,7 +371,7 @@ export default function GravacaoScreen() {
           {/* Aviso dinâmico: muda de texto conforme o estado da gravação */}
           <Animated.Text style={[styles.aviso, gravandoAudio && { opacity: piscar }]}>
             {gravandoAudio
-              ? '🔴 Gravando... funciona com a tela bloqueada'
+              ? 'Gravando... funciona com a tela bloqueada'
               : 'Áudio gravado e salvo automaticamente'}
            </Animated.Text>
 
@@ -376,16 +383,22 @@ export default function GravacaoScreen() {
               style={[styles.botaoGravar, gravandoAudio && styles.botaoParar]}
               onPress={() => animarBotao(gravandoAudio ? pararAudio : iniciarAudio)}
             >
+              <Ionicons
+                name={gravandoAudio ? 'stop-circle-outline' : 'mic-outline'}
+                size={20}
+                color="#fff"
+                style={{ marginRight: 8 }}
+              />
               <Text style={styles.textoBotaoGravar}>
-                {gravandoAudio ? '⏹  Parar Gravação' : '⏺  Iniciar Gravação de Áudio'}
+                {gravandoAudio ? 'Parar Gravação' : 'Iniciar Gravação de Áudio'}
               </Text>
             </TouchableOpacity>
           </Animated.View>
         </View>
       ) : (
         <View style={styles.secaoGravacao}>
-          <Animated.Text style={styles.aviso}>
-            {gravandoVideo ? '🔴 Gravando vídeo...' : 'Vídeo salvo automaticamente na galeria'}
+          <Animated.Text style={[styles.aviso, gravandoVideo && {opacity: piscar}]}>
+            {gravandoVideo ? 'Gravando vídeo...' : 'Vídeo salvo automaticamente na galeria'}
           </Animated.Text>
 
           {/* O preview da câmera só é exibido se a permissão foi concedida.
@@ -410,8 +423,14 @@ export default function GravacaoScreen() {
               style={[styles.botaoGravar, gravandoVideo && styles.botaoParar]}
               onPress={() => animarBotao(gravandoVideo ? pararVideo : iniciarVideo)}
             >
+              <Ionicons
+                name={gravandoVideo ? 'stop-circle-outline' : 'videocam-outline'}
+                size={20}
+                color="#fff"
+                style={{ marginRight: 8 }}
+              />
               <Text style={styles.textoBotaoGravar}>
-                {gravandoVideo ? '⏹  Parar Vídeo' : '⏺  Iniciar Gravação de Vídeo'}
+                {gravandoVideo ? 'Parar Vídeo' : 'Iniciar Gravação de Vídeo'}
               </Text>
             </TouchableOpacity>
           </Animated.View>
@@ -431,32 +450,40 @@ export default function GravacaoScreen() {
         renderItem={({ item }) => (
           <View style={styles.card}>
             <View style={styles.cardInfo}>
-              <Text style={styles.cardTipo}>
-                {item.tipo === 'audio' ? '🎙️ Áudio' : '📹 Vídeo'}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+                <Ionicons
+                  name={item.tipo === 'audio' ? 'mic' : 'videocam'}
+                  size={14}
+                  color="#AB92BF"
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={styles.cardTipo}>
+                  {item.tipo === 'audio' ? 'Áudio' : 'Vídeo'}
+                </Text>
+              </View>
               <Text style={styles.cardData}>{item.data}</Text>
             </View>
             <View style={styles.cardAcoes}>
               {/* Botão de play: exibido apenas para gravações de áudio */}
               {item.tipo === 'audio' && (
                 <TouchableOpacity style={styles.botaoAcao} onPress={() => reproduzirAudio(item.uri)}>
-                  <Text style={styles.iconeAcao}>▶</Text>
+                  <Ionicons name="play-circle-outline" size={26} color="#AB92BF" />
                 </TouchableOpacity>
               )}
               {/* Botão de compartilhar: abre o painel de compartilhamento do SO */}
               <TouchableOpacity style={styles.botaoAcao} onPress={() => compartilhar(item.uri, item.tipo)}>
-                <Text style={styles.iconeAcao}>📤</Text>
+                <Ionicons name="share-outline" size={24} color="#AB92BF" />
               </TouchableOpacity>
               {/* Botão de excluir: pede confirmação antes de remover */}
               <TouchableOpacity style={styles.botaoAcao} onPress={() => excluir(item.id)}>
-                <Text style={styles.iconeAcao}>🗑️</Text>
+                <Ionicons name="trash-outline" size={24} color="#f44336" />              
               </TouchableOpacity>
             </View>
           </View>
         )}  
         ListEmptyComponent={
           <View style={styles.vazio}>
-            <Text style={styles.vazioIcone}>🎙️</Text>
+            <Ionicons name="mic-off-outline" size={48} color="#3D3468" style={{ marginBottom: 8 }} />
             <Text style={styles.vazioTexto}>Nenhuma gravação ainda.</Text>
             <Text style={styles.vazioSub}>As gravações ficam salvas aqui e na galeria.</Text>
           </View>
@@ -490,7 +517,9 @@ const styles = StyleSheet.create({
     flex: 1, 
     padding: 10, 
     borderRadius: 8, 
-    alignItems: 'center' 
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   modoAtivo: { 
     backgroundColor: '#564787' 
@@ -524,7 +553,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#564787', 
     padding: 16, 
     borderRadius: 12, 
-    alignItems: 'center' 
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   botaoParar: { 
     backgroundColor: '#c62828'
@@ -576,16 +607,9 @@ const styles = StyleSheet.create({
   botaoAcao: { 
     padding: 8 
   },
-  iconeAcao: {
-    fontSize: 20
-  },
   vazio: {
     alignItems: 'center',
     marginTop: 30
-  },
-  vazioIcone: { 
-    fontSize: 40, 
-    marginBottom: 8 
   },
   vazioTexto: { 
     color: '#DBCBD8', 

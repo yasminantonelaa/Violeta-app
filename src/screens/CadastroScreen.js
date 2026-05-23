@@ -133,9 +133,11 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
     await AsyncStorage.setItem('@usuarioLogado', JSON.stringify(novoUsuario));
 
     // Exibe mensagem de boas-vindas e, ao confirmar, avança para o app
-    Alert.alert('Bem-vinda! 💜', `Conta criada com sucesso, ${nome.trim()}!`, [
-      { text: 'Entrar', onPress: onCadastro }
-    ]);
+    animarBotao(escalaCriar, () => {
+      Alert.alert('Bem-vinda!', `Conta criada com sucesso, ${nome.trim()}!`, [
+        { text: 'Entrar', onPress: onCadastro }
+      ]);
+    });
   }
 
   return (
@@ -145,12 +147,14 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
     >
       {/* Cabeçalho com logo, nome e slogan — mesmo visual da LoginScreen */}
       <View style={styles.logoContainer}>
-        <Image
-          source={require('../../assets/borboleta.jpg')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-        <Text style={styles.appNome}>VIOLETA</Text>
+        <View style={styles.logoWrapper}>
+          <Image
+            source={require('../../assets/borboleta.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={styles.appNome}>VIOLETA</Text>
+        </View>
         <Text style={styles.appSlogan}>Silêncio Nunca Mais</Text>
       </View>
 
@@ -174,7 +178,7 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
         <TextInput
           style={styles.input}
           placeholder="Como você quer ser chamada?"
-          placeholderTextColor="#C4A0BA"
+          placeholderTextColor="#AB92BF"
           value={nome}
           onChangeText={setNome}
         />
@@ -184,7 +188,7 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
         <TextInput
           style={styles.input}
           placeholder="Escolha um usuário único"
-          placeholderTextColor="#C4A0BA"
+          placeholderTextColor="#AB92BF"
           value={usuario}
           onChangeText={setUsuario}
           autoCapitalize="none"
@@ -196,13 +200,13 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
           <TextInput
             style={styles.inputSenha}
             placeholder="Mínimo 6 caracteres"
-            placeholderTextColor="#C4A0BA"
+            placeholderTextColor="#AB92BF"
             value={senha}
             onChangeText={setSenha}
             secureTextEntry={!senhaVisivel} // true = oculta com "******"
           />
           <TouchableOpacity onPress={() => setSenhaVisivel(!senhaVisivel)}>
-            <Ionicons name={senhaVisivel ? 'eye-off' : 'eye'} size={24} color="#AB92BF" />
+            <Ionicons name={senhaVisivel ? 'eye-off' : 'eye'} size={22} color="#DBCBD8" />
           </TouchableOpacity>
         </View>
 
@@ -213,7 +217,7 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
         <TextInput
           style={styles.input}
           placeholder="Repita sua senha"
-          placeholderTextColor="#C4A0BA"
+          placeholderTextColor="#AB92BF"
           value={confirmarSenha}
           onChangeText={setConfirmarSenha}
           secureTextEntry={!senhaVisivel}
@@ -294,10 +298,10 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
     paddingHorizontal: 20,
   },
-  logoContainer: { alignItems: 'center', marginBottom: 24 },
-  logo: { width: 80, height: 80, marginBottom: 10, tintColor: '#AB92BF' },
-  appNome: { fontSize: 30, fontWeight: 'bold', color: '#F2FDFF', letterSpacing: 8 },
-  appSlogan: { fontSize: 12, color: '#DBCBD8', fontStyle: 'italic', marginTop: 2 },
+  logoContainer: { alignItems: 'center', marginBottom: 24, alignSelf: 'center', },
+  logo: { width: 130, height: 130, marginBottom: -34, alignSelf: 'center' },
+  appNome: { fontSize: 24, fontWeight: 'bold', color: '#DBCBD8', letterSpacing: 8, marginBottom: 4, textAlign: 'center', },
+  appSlogan: { fontSize: 12, color: '#AB92BF', fontStyle: 'italic', marginTop: 4, textAlign: 'center' },
   card: {
     backgroundColor: '#2D2450',
     borderRadius: 20,

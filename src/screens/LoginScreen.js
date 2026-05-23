@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+
 export default function LoginScreen({ onLogin, onIrCadastro }) {
   
   //  Três estados controlam o formulario dessa tela
@@ -73,8 +74,10 @@ export default function LoginScreen({ onLogin, onIrCadastro }) {
     }
 
     // Etapa 3: persite a sessão e navega para o app
-    await AsyncStorage.setItem('@usuarioLogado', JSON.stringify(encontrado));
-    onLogin();
+    animarBotao(escalaEntrar, async () => {
+      await AsyncStorage.setItem('@usuarioLogado', JSON.stringify(encontrado));
+      onLogin();
+    });
   }
 
   //  Botão "Esqueceu sua senha?"
@@ -100,7 +103,7 @@ export default function LoginScreen({ onLogin, onIrCadastro }) {
       return;
     }
     Alert.alert(
-      'Dica de senha 💜',
+      'Dica de senha',
       `A senha da conta "${encontrado.usuario}" foi cadastrada por você no momento do cadastro.\n\nCaso não lembre, delete o app e recadastre-se.`,
       [{ text: 'Entendi', style: 'default' }]
     );
@@ -117,10 +120,10 @@ export default function LoginScreen({ onLogin, onIrCadastro }) {
       {/* Cabeçalho visual com logo, nome e slogan do app */}
       <View style={styles.logoContainer}>
         <Image
-          source={require('../../assets/borboleta.jpg')}
+          source={require('../../assets/borboleta.png')}
           style={styles.logo}
           resizeMode="contain"
-        />
+        />     
         <Text style={styles.appNome}>VIOLETA</Text>
         <Text style={styles.appSlogan}>Silêncio Nunca Mais</Text>
       </View>
@@ -222,9 +225,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   logoContainer: { alignItems: 'center', marginBottom: 28 },
-  logo: { width: 100, height: 100, marginBottom: 10, tintColor: '#AB92BF' },
-  appNome: { fontSize: 34, fontWeight: 'bold', color: '#F2FDFF', letterSpacing: 8 },
-  appSlogan: { fontSize: 13, color: '#DBCBD8', fontStyle: 'italic', marginTop: 2 },
+  logo: { width: 140, height: 140, marginBottom: -34 },
+  appNome: { fontSize: 26, fontWeight: 'bold', color: '#DBCBD8', letterSpacing: 8, marginBottom: 4, textAlign: 'center', },
+  appSlogan: { fontSize: 13, color: '#DBCBD8', fontStyle: 'italic', marginTop: 4, textAlign: 'center' },
   card: {
     backgroundColor: '#2D2450',
     borderRadius: 20,
@@ -234,7 +237,7 @@ const styles = StyleSheet.create({
     borderColor: '#3D3468',
     shadowColor: '#564787',   // sombra no iOS
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 10,
     elevation: 4,   // sombra no Android
   },
@@ -261,7 +264,7 @@ const styles = StyleSheet.create({
   inputSenha: { flex: 1, color: '#F2FDFF', padding: 14, fontSize: 15 },
   olho: { fontSize: 20 },
   botaoEsqueceu: { alignItems: 'flex-end', marginTop: 8, marginBottom: 4 },
-  textoEsqueceu: { color: '#DBCBD8', fontSize: 13 },
+  textoEsqueceu: { color: '#AB92BF', fontSize: 13 },
   botao: {
     backgroundColor: '#564787',
     padding: 16,
@@ -269,7 +272,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
   },
-  textoBotao: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  textoBotao: { color: '#F2FDFF', fontWeight: 'bold', fontSize: 16 },
   separador: {
     flexDirection: 'row',
     alignItems: 'center',

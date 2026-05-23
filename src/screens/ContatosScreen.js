@@ -14,6 +14,7 @@ import {
   FlatList, StyleSheet, Alert, Animated 
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 
 export default function ContatosScreen() {
@@ -120,7 +121,7 @@ export default function ContatosScreen() {
       <TextInput
         style={styles.input}
         placeholder="Nome do contato"
-        placeholderTextColor="#888"
+        placeholderTextColor="#AB92BF"
         value={nome}
         onChangeText={setNome}
       />
@@ -129,7 +130,7 @@ export default function ContatosScreen() {
       <TextInput
         style={styles.input}
         placeholder="Número com DDD (ex: 86999999999)"
-        placeholderTextColor="#888"
+        placeholderTextColor="#AB92BF"
         value={numero}
         onChangeText={setNumero}
         keyboardType="phone-pad"
@@ -141,6 +142,7 @@ export default function ContatosScreen() {
           style={styles.botao}
           onPress={() => animarBotao(escalaAdicionar, salvar)}
         >
+          <Ionicons name="person-add-outline" size={18} color="#fff" style={{ marginRight: 8 }} />
           <Text style={styles.textoBotao}>+ Adicionar Contato</Text>
         </TouchableOpacity>
       </Animated.View>
@@ -167,13 +169,13 @@ export default function ContatosScreen() {
               style={styles.botaoRemover}
               onPress={() => remover(item.id)}
             >
-              <Text style={styles.remover}>✕</Text>
+              <Ionicons name="close-circle-outline" size={26} color="#f44336" />
             </TouchableOpacity>
           </View>
         )}
         ListEmptyComponent={
           <View style={styles.vazio}>
-            <Text style={styles.vazioIcone}>👥</Text>
+            <Ionicons name="people-outline" size={52} color="#3D3468" style={{ marginBottom: 12 }} />            
             <Text style={styles.vazioTexto}>Nenhum contato cadastrado ainda.</Text>
             <Text style={styles.vazioSub}>Adicione pessoas de confiança acima.</Text>
           </View>
@@ -222,7 +224,6 @@ const styles = StyleSheet.create({
   nomeContato: { color: '#F2FDFF', fontWeight: 'bold', fontSize: 15 },
   numContato: { color: '#AB92BF', fontSize: 13, marginTop: 2 },
   botaoRemover: { padding: 8 },
-  remover: { color: '#f44336', fontSize: 22, fontWeight: 'bold' },
   vazio: { alignItems: 'center', marginTop: 40 },
   vazioIcone: { fontSize: 48, marginBottom: 12 },
   vazioTexto: { color: '#DBCBD8', fontSize: 16, marginBottom: 6 },

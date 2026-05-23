@@ -21,6 +21,7 @@ import {
 } from 'react-native';
 import * as Location from 'expo-location';
 import * as SMS from 'expo-sms';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function HomeScreen() {
@@ -129,7 +130,7 @@ export default function HomeScreen() {
     //  Oferece ligar para a Polícia Militar
     //  A usuária ainda precisa confirmar a ligação
     Alert.alert(
-      '🚨 SOS Acionado',
+      'SOS Acionado',
       'SMS enviado para seus contatos. Deseja ligar para a Polícia (190)?',
       [
         {
@@ -166,9 +167,13 @@ export default function HomeScreen() {
         {contatosSalvos.length} contato(s) cadastrado(s)
       </Text>
       <Text style={styles.infoLoc}>
-        {/* Operador ternário: exibe mensagem diferente conforme o GPS estar ativo ou não */}
-        {localizacao ? '📍 Localização ativa' : '📍 Sem localização'}
-      </Text>
+        <Ionicons
+          name={localizacao ? 'location' : 'location-outline'}
+          size={16}
+          color={localizacao ? '#AB92BF' : '#655A7C'}
+          style={{ marginRight: 6 }}
+        />
+    </Text>
     </View>
   );
 }
@@ -199,11 +204,12 @@ const styles = StyleSheet.create({
     width: 220,
     height: 220,
     borderRadius: 110,    // metade de 220 -> círculo perfeito
-    backgroundColor: '#c62828',
+    backgroundColor: '#df8f8f',
+
     alignItems: 'center',
     justifyContent: 'center',
     // Sombra vermelha ao redor do botão (iOS) — cria o efeito de "brilho"
-    shadowColor: '#f44336',
+    shadowColor: '#f2b6b6',
     shadowOffset: { width: 0, height: 0 },  // sombra em todas as direções
     shadowOpacity: 0.8,
     shadowRadius: 20,

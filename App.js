@@ -8,6 +8,7 @@ import React, { useState, useEffect, useRef} from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, TouchableOpacity, Alert, Animated } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Importação de todas as telas do aplicativo
@@ -34,15 +35,14 @@ function FadeView({ children}) {    //  children - a tela a ser exibida com anim
 
   useEffect(() => {
 
-    //  Animated.parallel executa duas animações ao mesmo tempo:
-    //    o fade de opacidade e o deslize vertical
+    //  Animated.parallel executa duas animações ao mesmo tempo
     //  duration: 320ms é rápido o suficiente para não atrasar a navegação, 
     //  mas perceptível o suficiente para suavizar a transição
     Animated.parallel([
       Animated.timing(opacidade, {
         toValue: 1,
         duration: 320,
-        useNativeDriver: true, // roda na thread nativa — mais performático
+        useNativeDriver: true,
       }),
       Animated.timing(translateY, {
         toValue: 0,
@@ -131,46 +131,43 @@ export default function App() {
     <FadeView>
       <NavigationContainer>
         <Tab.Navigator
-          screenOptions={{
+          screenOptions={({ route }) => ({
             tabBarActiveTintColor: '#564787',    // cor do ícone/texto da aba ativa
             tabBarInactiveTintColor: '#AB92BF',  // cor das abas inativas
-            tabBarStyle: { backgroundColor: '#1E1A2E', borderTopColor: '#2D2450' },
+            tabBarStyle: { backgroundColor: '#1E1A24', borderTopColor: '#2D2450' },
             headerStyle: { backgroundColor: '#2D2450' },
             headerTintColor: '#F2FDFF',
             headerTitleStyle: { fontWeight: 'bold' },
 
+            tabBarIcon: ({ focused, color }) => {
+              const icons = {
+                SOS: focused ? 'alert-circle' : 'alert-circle-outline',
+                Contatos: focused ? 'people' : 'people-outline',
+                Gravar: focused ? 'mic' : 'mic-outline',
+                Mapa: focused ? 'map' : 'map-outline',
+              };
+              return <Ionicons name={icons[route.name]} size={24} color={color} />;
+            },              
+
             // Botão "sair" exibido no canto direito do cabeçalho em todas as abas
             headerRight: () => (
               <TouchableOpacity onPress={sair} style={{ marginRight: 16 }}>
-                <Text style={{ color: '#F2FDFF', fontSize: 13 }}>Sair 🚪</Text>
+                <Ionicons name="log-out-outline" size={22} color="#F2FDFF" />
               </TouchableOpacity>
             ),
-          }}
+          })}
         >
           {/* Aba 1: Botão SOS - tela principal do app */}
-          <Tab.Screen
-            name="SOS"
-            component={HomeScreen}
-            options={{ tabBarIcon: () => <Text style={{ fontSize: 20 }}>🚨</Text> }}
-          />
+          <Tab.Screen name="SOS" component={HomeScreen} />
+ 
           {/* Aba 2: Rede de Proteção - gerenciamento de contatos de emergência */}
-          <Tab.Screen
-            name="Contatos"
-            component={ContatosScreen}
-            options={{ tabBarIcon: () => <Text style={{ fontSize: 20 }}>👥</Text> }}
-          />
+          <Tab.Screen name="Contatos" component={ContatosScreen} />
+ 
           {/* Aba 3: Gravação - registro sigiloso de áudio e vídeo */}
-          <Tab.Screen
-            name="Gravar"
-            component={GravacaoScreen}
-            options={{ tabBarIcon: () => <Text style={{ fontSize: 20 }}>🎙️</Text> }}
-          />
+          <Tab.Screen name="Gravar" component={GravacaoScreen} />
+ 
           {/* Aba 4: Mapa - pontos de riscos e atenção no campus */}
-          <Tab.Screen
-            name="Mapa"
-            component={MapaScreen}
-            options={{ tabBarIcon: () => <Text style={{ fontSize: 20 }}>🗺️</Text> }}
-          />
+          <Tab.Screen name="Mapa" component={MapaScreen} />
         </Tab.Navigator>
       </NavigationContainer>
     </FadeView>
