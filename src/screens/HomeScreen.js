@@ -14,13 +14,14 @@
 //  A tela também exibe o status atual de dois recursos essenciais:
 //    Quantos contatos estão cadastrados e se o GPS está ativo
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  Alert, Linking, Vibration
+  Alert, Linking, Vibration, Animated
 } from 'react-native';
 import * as Location from 'expo-location';
 import * as SMS from 'expo-sms';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function HomeScreen() {
@@ -32,13 +33,38 @@ export default function HomeScreen() {
   const [contatosSalvos, setContatosSalvos] = useState([]); //  array de contatos carregados do AsyncStorage
                                                             //  sem contatos, o SOS não tem para quem enviar o SMS
 
+  // pulso: valor animado que vai de 1 → 1.06 → 1 em loop contínuo
+  // Cria a sensação de que o botão está "respirando" e pronto para ser acionado
+  const pulso = useRef(new Animated.Value(1)).current;
+ 
   //  Ao montar a tela pela primeira vez, dispara duas operções em paralelo
   //  Ambas são iniciadas juntas para não atrasar uma esperando a outra
   useEffect(() => {
     carregarContatos();           //  busca a lista de contatos salvos 
     pedirPermissaoLocalizacao();  //  solicita acesso ao GPS
+    iniciarPulso();
   }, []);
 
+  // Cria um loop infinito de escala: expande 6% e volta ao tamanho original
+  // Animated.loop repete a sequência indefinidamente
+  // duration: 1200ms por ciclo — lento o suficiente para ser suave, não ansioso
+  function iniciarPulso() {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulso, {
+          toValue: 1.06,
+          duration: 1200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulso, {
+          toValue: 1,
+          duration: 1200,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }
+ 
   //  Solicita permissão de localização em primeiro plano e, se concedida,
   //  obtém as coorfenadas atuais para ter uma posição de partida disponível
   async function pedirPermissaoLocalizacao() {
@@ -104,7 +130,7 @@ export default function HomeScreen() {
     //  Oferece ligar para a Polícia Militar
     //  A usuária ainda precisa confirmar a ligação
     Alert.alert(
-      '🚨 SOS Acionado',
+      'SOS Acionado',
       'SMS enviado para seus contatos. Deseja ligar para a Polícia (190)?',
       [
         {
@@ -125,23 +151,29 @@ export default function HomeScreen() {
 
       {/* Botão SOS circular: activeOpacity={0.8} faz o botão escurecer levemente ao ser pressionado, dando feedback visual além do tátil
           O borderRadius igual à metade da largura/altura (110 = 220/2) garante o formato perfeitamente circular */}
-      <TouchableOpacity
-        style={styles.botaoSOS}
-        onPress={acionarSOS}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.textoBotao}>SOS</Text>
-        <Text style={styles.textoBotaoSub}>Pressione em caso de emergência</Text>
-      </TouchableOpacity>
+      <Animated.View style={{ transform: [{ scale: pulso }] }}>
+        <TouchableOpacity
+          style={styles.botaoSOS}
+          onPress={acionarSOS}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.textoBotao}>SOS</Text>
+          <Text style={styles.textoBotaoSub}>Pressione em caso de emergência</Text>
+        </TouchableOpacity>
+      </Animated.View>
 
       {/* Indicadores de status: informam se o SOS está pronto para funcionar */}
       <Text style={styles.info}>
         {contatosSalvos.length} contato(s) cadastrado(s)
       </Text>
       <Text style={styles.infoLoc}>
-        {/* Operador ternário: exibe mensagem diferente conforme o GPS estar ativo ou não */}
-        {localizacao ? '📍 Localização ativa' : '📍 Sem localização'}
-      </Text>
+        <Ionicons
+          name={localizacao ? 'location' : 'location-outline'}
+          size={16}
+          color={localizacao ? '#AB92BF' : '#655A7C'}
+          style={{ marginRight: 6 }}
+        />
+    </Text>
     </View>
   );
 }
@@ -150,7 +182,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#1E1A2E',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
@@ -158,13 +190,13 @@ const styles = StyleSheet.create({
   titulo: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#9C27B0',
+    color: '#F2FDFF',
     letterSpacing: 6,
     marginBottom: 4,
   },
   subtitulo: {
     fontSize: 14,
-    color: '#ce93d8',
+    color: '#DBCBD8',
     marginBottom: 60,
     fontStyle: 'italic',
   },
@@ -172,11 +204,12 @@ const styles = StyleSheet.create({
     width: 220,
     height: 220,
     borderRadius: 110,    // metade de 220 -> círculo perfeito
-    backgroundColor: '#c62828',
+    backgroundColor: '#df8f8f',
+
     alignItems: 'center',
     justifyContent: 'center',
     // Sombra vermelha ao redor do botão (iOS) — cria o efeito de "brilho"
-    shadowColor: '#f44336',
+    shadowColor: '#f2b6b6',
     shadowOffset: { width: 0, height: 0 },  // sombra em todas as direções
     shadowOpacity: 0.8,
     shadowRadius: 20,
@@ -195,6 +228,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4,
   },
-  info: { color: '#ce93d8', fontSize: 14, marginTop: 10 },
-  infoLoc: { color: '#81c784', fontSize: 13, marginTop: 6 },  // verde para indicar status positivo
+  info: { color: '#DBCBD8', fontSize: 14, marginTop: 10 },
+  infoLoc: { color: '#AB92BF', fontSize: 13, marginTop: 6 },  // verde para indicar status positivo
 });

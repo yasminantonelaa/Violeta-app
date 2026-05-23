@@ -8,12 +8,13 @@
 //
 //  Todos os dados ficam salvos localmente no AsyncStorage, sem nenhum envio para servidores externos
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
-  StyleSheet, ScrollView, Alert, Image
+  StyleSheet, ScrollView, Alert, Image, Animated
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 
 //  Lista fixa de opções de identidade de gênero apresentadas no formulário
 //  Definida fora do componente para não ser recriada a cada render
@@ -34,6 +35,30 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
   const [generoSelecionado, setGeneroSelecionado] = useState(null);   //  qual opção de gênero foi escolhida (null = nenhuma)
   const [aceitouTermos, setAceitouTermos] = useState(false);          //  boolean do checkbox de autodeclaração
   const [senhaVisivel, setSenhaVisivel] = useState(false);            //  alterna entre mostrar e ocultar a senha
+
+  // cardAnim: fade + deslize suave do card ao entrar na tela (0 → 1 em 400ms)
+  const cardAnim = useRef(new Animated.Value(0)).current;
+  // escalaCriar: escala do botão "Criar conta" ao ser pressionado (1 → 0.96 → 1)
+  const escalaCriar = useRef(new Animated.Value(1)).current;
+  // escalaVoltar: escala do botão "Já tenho conta" ao ser pressionado
+  const escalaVoltar = useRef(new Animated.Value(1)).current;
+
+  // Dispara a animação de entrada do card logo que a tela monta
+  useEffect(() => {
+    Animated.timing(cardAnim, {
+      toValue: 1,
+      duration: 400,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+ 
+  // Anima a escala de um botão: comprime levemente ao pressionar e volta ao soltar
+  function animarBotao(escala, callback) {
+    Animated.sequence([
+      Animated.timing(escala, { toValue: 0.96, duration: 80, useNativeDriver: true }),
+      Animated.timing(escala, { toValue: 1, duration: 80, useNativeDriver: true }),
+    ]).start(callback);
+  }
 
   //  Função principal de cadastro
   //  
@@ -108,9 +133,11 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
     await AsyncStorage.setItem('@usuarioLogado', JSON.stringify(novoUsuario));
 
     // Exibe mensagem de boas-vindas e, ao confirmar, avança para o app
-    Alert.alert('Bem-vinda! 💜', `Conta criada com sucesso, ${nome.trim()}!`, [
-      { text: 'Entrar', onPress: onCadastro }
-    ]);
+    animarBotao(escalaCriar, () => {
+      Alert.alert('Bem-vinda!', `Conta criada com sucesso, ${nome.trim()}!`, [
+        { text: 'Entrar', onPress: onCadastro }
+      ]);
+    });
   }
 
   return (
@@ -120,25 +147,38 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
     >
       {/* Cabeçalho com logo, nome e slogan — mesmo visual da LoginScreen */}
       <View style={styles.logoContainer}>
-        <Image
-          source={require('../../assets/borboleta.jpg')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-        <Text style={styles.appNome}>VIOLETA</Text>
+        <View style={styles.logoWrapper}>
+          <Image
+            source={require('../../assets/borboleta.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={styles.appNome}>VIOLETA</Text>
+        </View>
         <Text style={styles.appSlogan}>Silêncio Nunca Mais</Text>
       </View>
 
-      {/* Card branco que agrupa o formulário completo */}    
-      <View style={styles.card}>
+      {/* Card animado: desliza de baixo para cima e faz fade ao entrar na tela */}
+      <Animated.View style={[
+        styles.card,
+        {
+          opacity: cardAnim,
+          transform: [{
+            translateY: cardAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [24, 0],
+            })
+          }]
+        }
+      ]}>
         <Text style={styles.titulo}>Criar conta</Text>
-
+ 
         {/* Campo de nome completo — sem restrição de capitalização */}
         <Text style={styles.label}>Nome completo</Text>
         <TextInput
           style={styles.input}
           placeholder="Como você quer ser chamada?"
-          placeholderTextColor="#C4A0BA"
+          placeholderTextColor="#AB92BF"
           value={nome}
           onChangeText={setNome}
         />
@@ -148,7 +188,7 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
         <TextInput
           style={styles.input}
           placeholder="Escolha um usuário único"
-          placeholderTextColor="#C4A0BA"
+          placeholderTextColor="#AB92BF"
           value={usuario}
           onChangeText={setUsuario}
           autoCapitalize="none"
@@ -160,13 +200,13 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
           <TextInput
             style={styles.inputSenha}
             placeholder="Mínimo 6 caracteres"
-            placeholderTextColor="#C4A0BA"
+            placeholderTextColor="#AB92BF"
             value={senha}
             onChangeText={setSenha}
             secureTextEntry={!senhaVisivel} // true = oculta com "******"
           />
           <TouchableOpacity onPress={() => setSenhaVisivel(!senhaVisivel)}>
-            <Text style={styles.olho}>{senhaVisivel ? '🙈' : '👁️'}</Text>
+            <Ionicons name={senhaVisivel ? 'eye-off' : 'eye'} size={22} color="#DBCBD8" />
           </TouchableOpacity>
         </View>
 
@@ -177,7 +217,7 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
         <TextInput
           style={styles.input}
           placeholder="Repita sua senha"
-          placeholderTextColor="#C4A0BA"
+          placeholderTextColor="#AB92BF"
           value={confirmarSenha}
           onChangeText={setConfirmarSenha}
           secureTextEntry={!senhaVisivel}
@@ -222,16 +262,24 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
           </Text>
         </TouchableOpacity>
 
-        {/* Botão principal: só avança após todas as validações passarem */}
-        <TouchableOpacity style={styles.botao} onPress={cadastrar}>
-          <Text style={styles.textoBotao}>Criar conta 💜</Text>
-        </TouchableOpacity>
+        {/* Botão principal animado: só avança após todas as validações passarem */}
+        <Animated.View style={{ transform: [{ scale: escalaCriar }] }}>
+          <TouchableOpacity style={styles.botao} onPress={cadastrar}>
+            <Text style={styles.textoBotao}>Criar conta</Text>
+          </TouchableOpacity>
+        </Animated.View>
 
         {/* Link para voltar ao login caso a usuária já tenha uma conta */}
-        <TouchableOpacity style={styles.botaoVoltar} onPress={onVoltar}>
-          <Text style={styles.textoVoltar}>← Já tenho conta</Text>
-        </TouchableOpacity>
-      </View>
+        <Animated.View style={{ transform: [{ scale: escalaVoltar }] }}>
+          <TouchableOpacity
+            style={styles.botaoVoltar}
+            onPress={() => animarBotao(escalaVoltar, onVoltar)}
+          >
+            <Text style={styles.textoVoltar}>← Já tenho conta</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </Animated.View>
+ 
 
       {/* Rodapé reforçando que os dados são armazenados apenas localmente */}
       <Text style={styles.rodape}>
@@ -245,67 +293,66 @@ export default function CadastroScreen({ onCadastro, onVoltar }) {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#FDF0F5',
+    backgroundColor: '#1E1A2E',
     alignItems: 'center',
     paddingVertical: 40,
     paddingHorizontal: 20,
   },
-  logoContainer: { alignItems: 'center', marginBottom: 24 },
-  logo: { width: 80, height: 80, marginBottom: 10, tintColor: '#C06090' },
-  appNome: { fontSize: 30, fontWeight: 'bold', color: '#C06090', letterSpacing: 8 },
-  appSlogan: { fontSize: 12, color: '#A080B0', fontStyle: 'italic', marginTop: 2 },
+  logoContainer: { alignItems: 'center', marginBottom: 24, alignSelf: 'center', },
+  logo: { width: 130, height: 130, marginBottom: -34, alignSelf: 'center' },
+  appNome: { fontSize: 24, fontWeight: 'bold', color: '#DBCBD8', letterSpacing: 8, marginBottom: 4, textAlign: 'center', },
+  appSlogan: { fontSize: 12, color: '#AB92BF', fontStyle: 'italic', marginTop: 4, textAlign: 'center' },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: '#2D2450',
     borderRadius: 20,
     padding: 24,
     width: '100%',
     borderWidth: 1,
-    borderColor: '#E8C0D8',
+    borderColor: '#3D3468',
     elevation: 4,   // sombra no Android
   },
-  titulo: { fontSize: 22, fontWeight: 'bold', color: '#C06090', marginBottom: 16, textAlign: 'center' },
-  label: { color: '#A080B0', fontWeight: 'bold', fontSize: 14, marginBottom: 6, marginTop: 12 },
-  sublabel: { color: '#C4A0BA', fontSize: 12, marginBottom: 10, lineHeight: 18 },
+  titulo: { fontSize: 22, fontWeight: 'bold', color: '#F2FDFF', marginBottom: 16, textAlign: 'center' },
+  label: { color: '#DBCBD8', fontWeight: 'bold', fontSize: 14, marginBottom: 6, marginTop: 12 },
+  sublabel: { color: '#AB92BF', fontSize: 12, marginBottom: 10, lineHeight: 18 },
   input: {
-    backgroundColor: '#FDF0F5',
-    color: '#6D3B5E',
+    backgroundColor: '#1E1A2E',
+    color: '#F2FDFF',
     padding: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E8C0D8',
+    borderColor: '#3D3468',
     fontSize: 15,
   },
   inputSenhaContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FDF0F5',
+    backgroundColor: '#1E1A2E',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E8C0D8',
+    borderColor: '#3D3468',
     paddingRight: 12,
   },
-  inputSenha: { flex: 1, color: '#6D3B5E', padding: 14, fontSize: 15 },
-  olho: { fontSize: 20 },
+  inputSenha: { flex: 1, color: '#F2FDFF', padding: 14, fontSize: 15 },
   opcaoGenero: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FDF0F5',
+    backgroundColor: '#1E1A2E',
     borderRadius: 10,
     padding: 12,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#F0D0E0',
+    borderColor: '#3D3468',
   },
-  opcaoSelecionada: { borderColor: '#C06090', backgroundColor: '#FDE8F2' },
+  opcaoSelecionada: { borderColor: '#564787', backgroundColor: '#2D2450' },
   radio: {
     width: 20, height: 20, borderRadius: 10,    // borderRadius igual a metade = círculo perfeito
-    borderWidth: 2, borderColor: '#C4A0BA',
+    borderWidth: 2, borderColor: '#AB92BF',
     marginRight: 12, alignItems: 'center', justifyContent: 'center',
   },
-  radioSelecionado: { borderColor: '#C06090' },
-  radioDentro: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#C06090' },
-  textoOpcao: { color: '#A080B0', fontSize: 14, flex: 1 },
-  textoOpcaoSelecionado: { color: '#6D3B5E', fontWeight: 'bold' },
+  radioSelecionado: { borderColor: '#564787' },
+  radioDentro: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#564787' },
+  textoOpcao: { color: '#AB92BF', fontSize: 14, flex: 1 },
+  textoOpcaoSelecionado: { color: '#F2FDFF', fontWeight: 'bold' },
   checkContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',   // alinha pelo topo para o checkbox não centralizar com um texto longo
@@ -314,19 +361,19 @@ const styles = StyleSheet.create({
   },
   checkbox: {
     width: 22, height: 22, borderRadius: 6,
-    borderWidth: 2, borderColor: '#C06090',
+    borderWidth: 2, borderColor: '#564787',
     marginRight: 12, alignItems: 'center',
     justifyContent: 'center', marginTop: 2, flexShrink: 0,
   },
-  checkboxMarcado: { backgroundColor: '#C06090' },
+  checkboxMarcado: { backgroundColor: '#564787' },
   checkmark: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
-  textoCheck: { color: '#A080B0', fontSize: 12, flex: 1, lineHeight: 18 },
+  textoCheck: { color: '#DBCBD8', fontSize: 12, flex: 1, lineHeight: 18 },
   botao: {
-    backgroundColor: '#C06090',
+    backgroundColor: '#564787',
     padding: 16, borderRadius: 14, alignItems: 'center',
   },
   textoBotao: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   botaoVoltar: { alignItems: 'center', marginTop: 16, padding: 8 },
-  textoVoltar: { color: '#C06090', fontSize: 14 },
-  rodape: { color: '#C4A0BA', fontSize: 12, marginTop: 24, textAlign: 'center' },
+  textoVoltar: { color: '#AB92BF', fontSize: 14 },
+  rodape: { color: '#AB92BF', fontSize: 12, marginTop: 24, textAlign: 'center' },
 });

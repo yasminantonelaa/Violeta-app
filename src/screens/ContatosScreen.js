@@ -8,12 +8,13 @@
 //    - Remover um contato existente (com confirmação)
 //    - Listar todos os contatos cadastrados
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
-  FlatList, StyleSheet, Alert
+  FlatList, StyleSheet, Alert, Animated 
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 
 export default function ContatosScreen() {
@@ -21,6 +22,17 @@ export default function ContatosScreen() {
   const [numero, setNumero] = useState('');       //  texto digitado no campo de número do novo contato
   const [contatos, setContatos] = useState([]);   //  array com todos os contatos salvos
 
+  // escalaAdicionar: escala do botão "Adicionar Contato" ao ser pressionado (1 → 0.96 → 1)
+  const escalaAdicionar = useRef(new Animated.Value(1)).current;
+ 
+  // Anima a escala de um botão: comprime levemente ao pressionar e volta ao soltar
+  function animarBotao(escala, callback) {
+    Animated.sequence([
+      Animated.timing(escala, { toValue: 0.96, duration: 80, useNativeDriver: true }),
+      Animated.timing(escala, { toValue: 1, duration: 80, useNativeDriver: true }),
+    ]).start(callback);
+  }
+   
   //  useFocusEffect recarrega os contatos toda vez que a aba é visitada
   //  O useCallback com [] é obrigatório commo segundo argumento do useFocusEffect
   //    Ele memoriza a função para evitar loops infinitos de re-renderização
@@ -109,7 +121,7 @@ export default function ContatosScreen() {
       <TextInput
         style={styles.input}
         placeholder="Nome do contato"
-        placeholderTextColor="#888"
+        placeholderTextColor="#AB92BF"
         value={nome}
         onChangeText={setNome}
       />
@@ -118,17 +130,23 @@ export default function ContatosScreen() {
       <TextInput
         style={styles.input}
         placeholder="Número com DDD (ex: 86999999999)"
-        placeholderTextColor="#888"
+        placeholderTextColor="#AB92BF"
         value={numero}
         onChangeText={setNumero}
         keyboardType="phone-pad"
       />
 
       {/* Botão de adicionar: só persiste se a validação em salvar() passar */}
-      <TouchableOpacity style={styles.botao} onPress={salvar}>
-        <Text style={styles.textoBotao}>+ Adicionar Contato</Text>
-      </TouchableOpacity>
-
+      <Animated.View style={{ transform: [{ scale: escalaAdicionar }] }}>
+        <TouchableOpacity
+          style={styles.botao}
+          onPress={() => animarBotao(escalaAdicionar, salvar)}
+        >
+          <Ionicons name="person-add-outline" size={18} color="#fff" style={{ marginRight: 8 }} />
+          <Text style={styles.textoBotao}>+ Adicionar Contato</Text>
+        </TouchableOpacity>
+      </Animated.View>
+ 
       {/* Contador dinâmico que atualiza conforme contatos são adicionados/removidos */}
       <Text style={styles.secao}>
         {contatos.length} contato(s) cadastrado(s)
@@ -151,13 +169,13 @@ export default function ContatosScreen() {
               style={styles.botaoRemover}
               onPress={() => remover(item.id)}
             >
-              <Text style={styles.remover}>✕</Text>
+              <Ionicons name="close-circle-outline" size={26} color="#f44336" />
             </TouchableOpacity>
           </View>
         )}
         ListEmptyComponent={
           <View style={styles.vazio}>
-            <Text style={styles.vazioIcone}>👥</Text>
+            <Ionicons name="people-outline" size={52} color="#3D3468" style={{ marginBottom: 12 }} />            
             <Text style={styles.vazioTexto}>Nenhum contato cadastrado ainda.</Text>
             <Text style={styles.vazioSub}>Adicione pessoas de confiança acima.</Text>
           </View>
@@ -169,30 +187,30 @@ export default function ContatosScreen() {
 
 // -- Estilos --
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1a1a2e', padding: 20 },
-  titulo: { color: '#9C27B0', fontSize: 22, fontWeight: 'bold', marginBottom: 4 },
-  subtitulo: { color: '#ce93d8', fontSize: 13, marginBottom: 20, fontStyle: 'italic' },
+  container: { flex: 1, backgroundColor: '#1E1A2E', padding: 20 },
+  titulo: { color: '#F2FDFF', fontSize: 22, fontWeight: 'bold', marginBottom: 4 },
+  subtitulo: { color: '#DBCBD8', fontSize: 13, marginBottom: 20, fontStyle: 'italic' },
   input: {
-    backgroundColor: '#2a2a4e',
-    color: '#fff',
+    backgroundColor: '#2D2450',
+    color: '#F2FDFF',
     padding: 12,
     borderRadius: 10,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#6A0DAD',
+    borderColor: '#3D3468',
     fontSize: 15,
   },
   botao: {
-    backgroundColor: '#6A0DAD',
+    backgroundColor: '#564787',
     padding: 14,
     borderRadius: 10,
     alignItems: 'center',
     marginBottom: 24,
   },
   textoBotao: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
-  secao: { color: '#9C27B0', fontSize: 14, fontWeight: 'bold', marginBottom: 10 },
+  secao: { color: '#AB92BF', fontSize: 14, fontWeight: 'bold', marginBottom: 10 },
   card: {
-    backgroundColor: '#2a2a4e',
+    backgroundColor: '#2D2450',
     padding: 14,
     borderRadius: 10,
     marginBottom: 10,
@@ -200,15 +218,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderLeftWidth: 4,           // barra roxa na borda esquerda de cada card
-    borderLeftColor: '#9C27B0',
+    borderLeftColor: '#564787',
   },
   cardInfo: { flex: 1 },
-  nomeContato: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
-  numContato: { color: '#ce93d8', fontSize: 13, marginTop: 2 },
+  nomeContato: { color: '#F2FDFF', fontWeight: 'bold', fontSize: 15 },
+  numContato: { color: '#AB92BF', fontSize: 13, marginTop: 2 },
   botaoRemover: { padding: 8 },
-  remover: { color: '#f44336', fontSize: 22, fontWeight: 'bold' },
   vazio: { alignItems: 'center', marginTop: 40 },
   vazioIcone: { fontSize: 48, marginBottom: 12 },
-  vazioTexto: { color: '#666', fontSize: 16, marginBottom: 6 },
-  vazioSub: { color: '#444', fontSize: 13 },
+  vazioTexto: { color: '#DBCBD8', fontSize: 16, marginBottom: 6 },
+  vazioSub: { color: '#AB92BF', fontSize: 13 },
 });
